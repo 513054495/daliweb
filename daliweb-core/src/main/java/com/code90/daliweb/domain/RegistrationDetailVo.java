@@ -1,44 +1,27 @@
 package com.code90.daliweb.domain;
 
-import org.hibernate.annotations.GenericGenerator;
-
-import javax.persistence.*;
+import java.util.Date;
 
 /**
- * 报名详情实体类
+ * 报名详情展示类
  * @author Ray Lin
  * @create 2018-10-19 0:26
  **/
-@Entity
-@Table(name = "sys_registration_detail")
-public class RegistrationDetail extends BaseDomain {
-    private static final long serialVersionUID = 3808054832241925738L;
-    @Id
-    @GenericGenerator(name="UUIDGENERATE",strategy="uuid2")
-    @GeneratedValue(generator="UUIDGENERATE")
-    @Column(name="ID",length=36)
+public class RegistrationDetailVo extends BaseDomain {
+    private static final long serialVersionUID = 8412786424546724641L;
     private String id;
-    //姓名
-    @Column
     private String name;
-    //性别
-    @Column
     private int sex;
-    //年龄
-    @Column
     private int age;
-    //手机号码
-    @Column
     private String phone;
-    //报名编号
-    @Column
     private String registrationId;
-    //报名订单号
-    @Column
     private String orderId;
-    //状态(0.未报名，1.已报名)
-    @Column
     private int status;
+    private String registrationName;
+    private String area;
+    private String postalCode;
+    private Date lastTime;
+    private double money;
 
     public String getId() {
         return id;
@@ -102,5 +85,45 @@ public class RegistrationDetail extends BaseDomain {
 
     public void setStatus(int status) {
         this.status = status;
+    }
+
+    public String getRegistrationName() {
+        return registrationName;
+    }
+
+    public void setRegistrationName(String registrationName) {
+        this.registrationName = registrationName;
+    }
+
+    public String getArea() {
+        return area;
+    }
+
+    public void setArea(String area) {
+        this.area = area;
+    }
+
+    public String getPostalCode() {
+        return postalCode;
+    }
+
+    public void setPostalCode(String postalCode) {
+        this.postalCode = postalCode;
+    }
+
+    public Date getLastTime() {
+        return lastTime;
+    }
+
+    public void setLastTime(Date lastTime) {
+        this.lastTime = lastTime;
+    }
+
+    public double getMoney() {
+        return money;
+    }
+
+    public void setMoney(double money) {
+        this.money = money;
     }
 }

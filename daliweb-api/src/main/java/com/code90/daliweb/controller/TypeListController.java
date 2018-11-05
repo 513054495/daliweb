@@ -118,7 +118,7 @@ public class TypeListController {
         typeListVos.add(typeListVo1);
         List<TypeList> typeLists2=typeListServer.getAllByMainType(2);
         TypeListVo typeListVo2=new TypeListVo();
-        typeListVo2.setId(1);
+        typeListVo2.setId(2);
         typeListVo2.setTypeName("帖子类型");
         typeListVo2.setChildren(typeLists2);
         typeListVos.add(typeListVo2);

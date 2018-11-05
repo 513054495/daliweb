@@ -50,6 +50,10 @@ public class Commodity extends BaseDomain {
     //是否删除
     @Column
     private int deleted;
+    //规格列表
+    @Column
+    @Lob
+    private String specificationList;
 
     public int getStatus() {
         return status;
@@ -147,4 +151,11 @@ public class Commodity extends BaseDomain {
         this.deleted = deleted;
     }
 
+    public String getSpecificationList() {
+        return specificationList;
+    }
+
+    public void setSpecificationList(String specificationList) {
+        this.specificationList = specificationList;
+    }
 }

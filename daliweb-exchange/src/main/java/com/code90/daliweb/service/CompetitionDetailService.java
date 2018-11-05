@@ -19,4 +19,6 @@ public interface CompetitionDetailService extends JpaRepository<CompetitionDetai
     CompetitionDetail getByCompetitionIdAndUserCode(String id, String userCode);
     @Query("select c from CompetitionDetail c where c.competitionId=?1")
     List<CompetitionDetail> getDetailByCompetitionId(String id);
+    @Query("select c from CompetitionDetail c where c.createBy=?1")
+    List<CompetitionDetail> getCompetitionDetailByUserCode(String userCode);
 }

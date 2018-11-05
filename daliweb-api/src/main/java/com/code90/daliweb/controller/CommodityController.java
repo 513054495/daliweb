@@ -1,5 +1,6 @@
 package com.code90.daliweb.controller;
 
+import com.code90.daliweb.conf.RedisServer;
 import com.code90.daliweb.domain.Commodity;
 import com.code90.daliweb.request.shop.CommodityChangeReq;
 import com.code90.daliweb.request.shop.CommoditySaveReq;
@@ -33,6 +34,8 @@ public class CommodityController {
     private static final Logger logger=LoggerFactory.getLogger(CommodityController.class);
     @Autowired
     private CommodityServer commodityServer;
+    @Autowired
+    private RedisServer redisServer;
 
     /**
      * 新增商品
@@ -44,8 +47,10 @@ public class CommodityController {
         try {
             Commodity commodity=new Commodity();
             BeanUtils.copyProperties(req,commodity);
-            commodity.setId(IdUtils.createCommodityId());
+            String id=IdUtils.createCommodityId();
+            commodity.setId(id);
             commodityServer.save(commodity);
+            redisServer.setValue(id,commodity.getTotalNum()+"");
             logger.info("保存成功");
             return new CommonResponse("保存成功");
         }catch (Exception e){
@@ -65,6 +70,7 @@ public class CommodityController {
             Commodity commodity=(Commodity)commodityServer.getObjectById(req.getId());
             BeanUtils.copyProperties(req,commodity);
             commodityServer.save(commodity);
+            redisServer.setValue(req.getId(),commodity.getTotalNum()+"");
             logger.info("商品修改成功");
             return new CommonResponse("修改成功");
         }catch (Exception e){
@@ -141,6 +147,10 @@ public class CommodityController {
             for (String id : id_list) {
                 Commodity commodity = commodityServer.getCommodityAndDeleteById(id);
                 if (commodity != null) {
+                    String str_num=redisServer.getValue(id);
+                    if(!StringUtil.isEmpty(str_num)){
+                        commodity.setTotalNum(Integer.parseInt(str_num));
+                    }
                     commodities.add(commodity);
                 }
             }
@@ -165,6 +175,12 @@ public class CommodityController {
         int total=allCommodity.size();
         int totalPage=total%pageSize==0?total/pageSize:total/pageSize+1;
         List<Commodity> commodities=commodityServer.findCommodityCriteria(page,pageSize,req);
+        for(Commodity commodity : commodities){
+            String str_num=redisServer.getValue(commodity.getId());
+            if(!StringUtil.isEmpty(str_num)){
+                commodity.setTotalNum(Integer.parseInt(str_num));
+            }
+        }
         CommonResponse response= new CommonResponse("获取成功","info",commodities);
         response.addNewDate("pageNum",page+1);
         response.addNewDate("pageSize",pageSize);

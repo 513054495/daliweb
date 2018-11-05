@@ -109,4 +109,9 @@ public class CompetitionDetailServerImpl implements CompetitionDetailServer {
     public List<CompetitionDetail> getDetailByCompetitionId(String id) {
         return competitionDetailService.getDetailByCompetitionId(id);
     }
+
+    @Override
+    public List<CompetitionDetail> getCompetitionDetailByUserCode(String userCode) {
+        return competitionDetailService.getCompetitionDetailByUserCode(userCode);
+    }
 }

@@ -9,6 +9,7 @@ import com.alipay.api.request.AlipayTradeRefundRequest;
 import com.alipay.api.request.AlipayTradeWapPayRequest;
 import com.alipay.api.response.AlipayTradeRefundResponse;
 import com.code90.daliweb.conf.MyWxPayUtil;
+import com.code90.daliweb.conf.RedisServer;
 import com.code90.daliweb.conf.WXPayClient;
 import com.code90.daliweb.server.*;
 import com.code90.daliweb.utils.HttpUtil;
@@ -57,6 +58,10 @@ public class OrdersController {
     @Autowired
     private ShoppingCartServer shoppingCartServer;
     @Autowired
+    private RegistrationServer registrationServer;
+    @Autowired
+    private RedisServer redisServer;
+    @Autowired
     private WXPay wxPay;
     @Autowired
     private WXPayClient wxPayClient;
@@ -77,50 +82,82 @@ public class OrdersController {
     @Value("${spring.profiles.active}")
     private String payDev;
 
+
+    /**
+     * 订单校验
+     * @param req
+     * @return 校验结果
+     */
+    @RequestMapping(value = "/vaildOrder", method = RequestMethod.POST)
+    public CommonResponse vaildOrder1(@RequestBody OrdersSaveReq req) {
+       if(vaildOrder(req.getOrderDetailSaveReqs())){
+           logger.info("校验成功");
+           return new CommonResponse("校验成功");
+       }else{
+           logger.error("订单提交失败，库存失败");
+           return new CommonResponse("订单提交失败，库存失败", 1);
+       }
+    }
+
     /**
      * 订单生成
-     *
      * @param req 订单信息
      * @return 生成结果
      */
     @RequestMapping(value = "/addOrder", method = RequestMethod.POST)
     public CommonResponse addOrder(@RequestBody OrdersSaveReq req) {
         try {
-            Orders order = new Orders();
-            BeanUtils.copyProperties(req, order);
-            String id = IdUtils.createOrderId();
-            while (orderServer.getObjectById(id) != null) {
-                id = IdUtils.createOrderId();
-            }
-            order.setId(id);
-            order.createBy = req.getCreateBy();
-            orderServer.save(order);
-            List<OrderDetailSaveReq> orderDetailSaveReqs = req.getOrderDetailSaveReqs();
-            for (OrderDetailSaveReq orderDetailSaveReq : orderDetailSaveReqs) {
-                OrderDetail orderDetail = new OrderDetail();
-                BeanUtils.copyProperties(orderDetailSaveReq, orderDetail);
-                orderDetail.setOrderId(order.getId());
-                orderDetailServer.save(orderDetail);
-                Commodity commodity=commodityServer.getCommodityAndDeleteById(orderDetail.getCommodityId());
-                commodity.setTotalNum(commodity.getTotalNum()-orderDetail.getOrderNum());
-                commodityServer.save(commodity);
-                if(req.getIsShoppingCart()!=0) {
-                    ShoppingCart shoppingCart = shoppingCartServer.getShoppingCartByCommodityIdAndcreateBy(orderDetail.getCommodityId(), order.createBy);
-                    int count = shoppingCart.getNum() - orderDetail.getOrderNum();
-                    if (count > 0) {
-                        shoppingCart.setNum(count);
-                        shoppingCartServer.save(shoppingCart);
-                    } else {
-                        shoppingCartServer.delete(shoppingCart);
+            if(vaildOrder(req.getOrderDetailSaveReqs())) {
+                Orders order = new Orders();
+                BeanUtils.copyProperties(req, order);
+                String id = IdUtils.createOrderId();
+                while (orderServer.getObjectById(id) != null) {
+                    id = IdUtils.createOrderId();
+                }
+                order.setId(id);
+                order.createBy = req.getCreateBy();
+                orderServer.save(order);
+                List<OrderDetailSaveReq> orderDetailSaveReqs = req.getOrderDetailSaveReqs();
+                for (OrderDetailSaveReq orderDetailSaveReq : orderDetailSaveReqs) {
+                    OrderDetail orderDetail = new OrderDetail();
+                    BeanUtils.copyProperties(orderDetailSaveReq, orderDetail);
+                    orderDetail.setOrderId(order.getId());
+                    orderDetailServer.save(orderDetail);
+                    int num=redisServer.getNum(orderDetail.getCommodityId());
+                    redisServer.setValue(orderDetail.getCommodityId(),(num-orderDetail.getOrderNum())+"");
+                    if (req.getIsShoppingCart() != 0) {
+                        ShoppingCart shoppingCart = shoppingCartServer.getShoppingCartByCommodityIdAndcreateBy(orderDetail.getCommodityId(), order.createBy ,orderDetail.getSpecification() );
+                        int count = shoppingCart.getNum() - orderDetail.getOrderNum();
+                        if (count > 0) {
+                            shoppingCart.setNum(count);
+                            shoppingCartServer.save(shoppingCart);
+                        } else {
+                            shoppingCartServer.delete(shoppingCart);
+                        }
                     }
                 }
+                logger.info("保存成功");
+                return new CommonResponse("保存成功", "orderId", id);
+            }else{
+                logger.error("订单提交失败，库存失败");
+                return new CommonResponse("订单提交失败，库存失败", 1);
             }
-            logger.info("保存成功");
-            return new CommonResponse("保存成功", "orderId", id);
         } catch (Exception e) {
             logger.error("保存失败，原因：" + e.getMessage());
             return new CommonResponse("保存失败", 1, e);
         }
+    }
+
+    private boolean vaildOrder(List<OrderDetailSaveReq> list){
+        boolean flag=true;
+        for(OrderDetailSaveReq orderDetailSaveReq : list){
+            int num=redisServer.getNum(orderDetailSaveReq.getCommodityId());
+            if(num-orderDetailSaveReq.getOrderNum()<0){
+                flag=false;
+                return flag;
+            }
+        }
+        return flag;
     }
 
     /**
@@ -182,9 +219,8 @@ public class OrdersController {
                         }
                         List<OrderDetail> orderDetails=orderDetailServer.getOrderDetailByOrderId(orders.getId());
                         for (OrderDetail orderDetail : orderDetails){
-                            Commodity commodity= (Commodity) commodityServer.getObjectById(orderDetail.getCommodityId());
-                            commodity.setTotalNum(commodity.getTotalNum()+orderDetail.getOrderNum());
-                            commodityServer.save(commodity);
+                            int num = redisServer.getNum(orderDetail.getCommodityId());
+                            redisServer.setValue(orderDetail.getCommodityId(),(num+orderDetail.getOrderNum())+"");
                         }
                     }
                     orderServer.save(orders);
@@ -304,6 +340,7 @@ public class OrdersController {
                         commodityVo.setStatus(orderDetail.getStatus());
                         commodityVo.setDetailId(orderDetail.getId());
                         commodityVo.setRefundReason(orderDetail.getRefundReason());
+                        commodityVo.setSpecification(orderDetail.getSpecification());
                         ordersVo.getOrderCommodities().add(commodityVo);
                     }
                     ordersVos.add(ordersVo);
@@ -412,6 +449,7 @@ public class OrdersController {
                 commodityVo.setStatus(orderDetail.getStatus());
                 commodityVo.setDetailId(orderDetail.getId());
                 commodityVo.setRefundReason(orderDetail.getRefundReason());
+                commodityVo.setSpecification(orderDetail.getSpecification());
                 ordersVo.getOrderCommodities().add(commodityVo);
                 if (orderDetail.getStatus() == 1) {
                     ordersVo.setIsRefund(1);
@@ -447,6 +485,7 @@ public class OrdersController {
                     commodityVo.setStatus(orderDetail.getStatus());
                     commodityVo.setOrderNum(orderDetail.getOrderNum());
                     commodityVo.setDetailId(orderDetail.getId());
+                    commodityVo.setSpecification(orderDetail.getSpecification());
                     commodityVo.setRefundReason(orderDetail.getRefundReason());
                     commodityVo.createBy = orderDetail.createBy;
                     commodityVo.createTime = orderDetail.createTime;
@@ -480,6 +519,7 @@ public class OrdersController {
         commodityVo.lastmodifiedBy = orderDetail.lastmodifiedBy;
         commodityVo.modifyTime = orderDetail.modifyTime;
         commodityVo.setMoney(orderDetail.getMoney());
+        commodityVo.setSpecification(orderDetail.getSpecification());
         return new CommonResponse("获取成功", "info", commodityVo);
     }
 
@@ -527,6 +567,7 @@ public class OrdersController {
                         BeanUtils.copyProperties(commodity, commodityVo);
                         commodityVo.setOrderNum(orderDetail.getOrderNum());
                         commodityVo.setStatus(orderDetail.getStatus());
+                        commodityVo.setSpecification(orderDetail.getSpecification());
                         ordersVo.getOrderCommodities().add(commodityVo);
                     }
                     ordersVos.add(ordersVo);
@@ -553,9 +594,15 @@ public class OrdersController {
             String commodityList = "";
             for (int j = 0; j < orderCommodities.size(); j++) {
                 if (j != (orderCommodities.size() - 1)) {
-                    commodityList += "商品编号：" + orderCommodities.get(j).getId() + ";商品名称：" + orderCommodities.get(j).getName() + ";商品数量：" + orderCommodities.get(j).getOrderNum() + ";" + ";商品状态：" + orderCommodities.get(j).getStatus() + ";" + "\r\n";
+                    commodityList += "商品编号：" + orderCommodities.get(j).getId() + ";商品名称：" + orderCommodities.get(j).getName() +
+                                    ";商品数量：" + orderCommodities.get(j).getOrderNum() + ";" +
+                                    ";商品状态：" + orderCommodities.get(j).getStatus() + ";" +
+                                    ";商品规格"+ orderCommodities.get(j).getSpecification()+"\r\n";
                 } else {
-                    commodityList += "商品编号：" + orderCommodities.get(j).getId() + ";商品名称：" + orderCommodities.get(j).getName() + ";商品数量：" + orderCommodities.get(j).getOrderNum() + ";" + ";商品状态：" + orderCommodities.get(j).getStatus() + ";";
+                    commodityList += "商品编号：" + orderCommodities.get(j).getId() + ";商品名称：" + orderCommodities.get(j).getName() +
+                                     ";商品数量：" + orderCommodities.get(j).getOrderNum() + ";" +
+                                     ";商品状态：" + orderCommodities.get(j).getStatus() + ";"+
+                                     ";商品规格"+ orderCommodities.get(j).getSpecification()+";";
                 }
             }
             row.add(commodityList);
@@ -568,7 +615,7 @@ public class OrdersController {
     }
 
     @RequestMapping(value = "/alipay", method = RequestMethod.GET)
-    public CommonResponse alipay(HttpServletResponse httpResponse, @RequestParam("id") String id) throws IOException {
+    public CommonResponse alipay(HttpServletResponse httpResponse, @RequestParam("id") String id,String orderType,double money) throws IOException {
         AlipayClient alipayClient = null;
         if (payDev.equals("dev")) {
             alipayClient = new DefaultAlipayClient(server_url, app_id, private_key_test, format, charset, alipay_public_key_test, sign_type);
@@ -577,58 +624,89 @@ public class OrdersController {
         }
         //创建API对应的request
         AlipayTradeWapPayRequest alipayRequest = new AlipayTradeWapPayRequest();
-        Orders orders = (Orders) orderServer.getObjectById(id);
         //在公共参数中设置回跳和通知地址
-        //alipayRequest.setReturnUrl(return_url);
-        alipayRequest.setReturnUrl((notify_url + "?id=" + orders.getId()));
+        alipayRequest.setReturnUrl((notify_url + "?id=" + id));
         String bizContent = "{";
-        if (orders != null && orders.getStatus() == 0) {
-            List<OrderDetail> orderDetails = orderDetailServer.getOrderDetailByOrderId(orders.getId());
-            //填充业务参数
-            bizContent += "\"out_trade_no\":\"" + orders.getId() + "\"," +
-                    " \"total_amount\":\"" + orders.getTotalMoney() + "\"," +
-                    " \"product_code\":\"QUICK_WAP_PAY\"" +
-                    " ,\"subject\":\"达礼网商城订单\"}";
-
-            alipayRequest.setBizContent(bizContent);
-            String form = "";
-            try {
-                //调用SDK生成表单
-                form = alipayClient.pageExecute(alipayRequest).getBody();
-            } catch (AlipayApiException e) {
-                e.printStackTrace();
+        if(StringUtil.isEmpty(orderType)) {
+            //正常订单
+            Orders orders = (Orders) orderServer.getObjectById(id);
+            if (orders != null && orders.getStatus() == 0) {
+                List<OrderDetail> orderDetails = orderDetailServer.getOrderDetailByOrderId(orders.getId());
+                //填充业务参数
+                bizContent += "\"out_trade_no\":\"" + orders.getId() + "\"," +
+                        " \"total_amount\":\"" + orders.getTotalMoney() + "\"," +
+                        " \"product_code\":\"QUICK_WAP_PAY\"" +
+                        " ,\"subject\":\"达礼网商城订单\"}";
+            } else {
+                logger.info("提交支付失败，订单不存在或者订单状态不正确");
+                return new CommonResponse("提交支付失败，订单不存在或者订单状态不正确");
             }
-            httpResponse.setContentType("text/html;charset=" + charset);
-            httpResponse.getWriter().write(form);
-            httpResponse.getWriter().flush();
-            httpResponse.getWriter().close();
-            logger.info("提交支付成功");
-            return new CommonResponse("提交支付成功");
-        } else {
-            logger.info("提交支付失败，订单不存在或者订单状态不正确");
-            return new CommonResponse("提交支付失败，订单不存在或者订单状态不正确");
+        }else if("1".equals(orderType)){
+            //报名订单
+            bizContent += "\"out_trade_no\":\"" + id + "\"," +
+                    " \"total_amount\":\"" + money + "\"," +
+                    " \"product_code\":\"QUICK_WAP_PAY\"" +
+                    " ,\"subject\":\"达礼网汉学团报名订单\"}";
         }
+        alipayRequest.setBizContent(bizContent);
+        String form = "";
+        try {
+            //调用SDK生成表单
+            form = alipayClient.pageExecute(alipayRequest).getBody();
+        } catch (AlipayApiException e) {
+            e.printStackTrace();
+        }
+        httpResponse.setContentType("text/html;charset=" + charset);
+        httpResponse.getWriter().write(form);
+        httpResponse.getWriter().flush();
+        httpResponse.getWriter().close();
+        logger.info("提交支付成功");
+        return new CommonResponse("提交支付成功");
     }
 
     @RequestMapping(value = "/notify", method = RequestMethod.GET)
     public void notify(HttpServletResponse httpResponse, HttpServletRequest request, @RequestParam("id") String id) throws IOException {
         //获取请求
+        //设置3秒钟跳转
+        String url="";
+        if (payDev == "test") {
+            url="http://114.116.12.160:8080/shopping/paySuccess";
+        } else {
+            url="http://www.dali5.com/shopping/paySuccess";
+        }
         Orders orders = (Orders) orderServer.getObjectById(id);
-        String trade_no = request.getParameter("trade_no");
-        orders.setPayType(2);
-        orders.setPayTime(new Date());
-        orders.setPayNo(trade_no);
-        orders.setStatus(1);
-        orderServer.save(orders);
+        RegistrationDetail registrationDetail=registrationServer.getRegistrationDetailByOrderId(id);
+        if(null!=orders){
+            String trade_no = request.getParameter("trade_no");
+            orders.setPayType(2);
+            orders.setPayTime(new Date());
+            orders.setPayNo(trade_no);
+            List<OrderDetail> orderDetails=orderDetailServer.getOrderDetailByOrderId(orders.getId());
+            for (OrderDetail orderDetail : orderDetails){
+                Commodity commodity= (Commodity) commodityServer.getObjectById(orderDetail.getCommodityId());
+                if(commodity.getType()==0){
+                    orders.setStatus(1);
+                }else if(commodity.getType()==1){
+                    orders.setStatus(5);
+                    if(commodity.getIsVip()==1&&commodity.getStatus()!=2) {
+                        User user = userServer.getUserByUserCode(orders.createBy);
+                        user.setUserType(1);
+                        user.setTeamLevel(1);
+                        userServer.save(user);
+                    }
+                }
+                break;
+            }
+            orderServer.save(orders);
+        }else if(null!=registrationDetail){
+            registrationDetail.setStatus(1);
+            registrationServer.saveDetail(registrationDetail);
+        }
         logger.info("支付成功");
         httpResponse.setContentType("text/html;charset=UTF-8");
         httpResponse.getWriter().write("支付宝支付成功！3秒钟跳到主页");
         //设置3秒钟跳转
-        if (payDev == "test") {
-            httpResponse.setHeader("refresh", "3;url=http://114.116.12.160:8080/shopping/paySuccess");
-        } else {
-            httpResponse.setHeader("refresh", "3;url=http://www.dali5.com/shopping/paySuccess");
-        }
+        httpResponse.setHeader("refresh", "3;url="+url);
     }
 
     @RequestMapping(value = "/aliRefund", method = RequestMethod.GET)
@@ -669,16 +747,24 @@ public class OrdersController {
     }
 
     @RequestMapping(value = "/wxpay", method = RequestMethod.GET)
-    public void wxpay(@RequestParam("id") String id, HttpServletResponse response) throws Exception {
+    public void wxpay(@RequestParam("id") String id, HttpServletResponse response,String orderType,double money) throws Exception {
         Map<String, String> reqData = new HashMap<>();
-        Orders orders = (Orders) orderServer.getObjectById(id);
-        reqData.put("out_trade_no", orders.getId());
+        reqData.put("out_trade_no", id);
         reqData.put("trade_type", "MWEB");
         reqData.put("product_id", "1");
-        reqData.put("body", "达理网商城商品下单");
-        // 订单总金额，单位为分
-        reqData.put("total_fee", ((int) (orders.getTotalMoney() * 100)) + "");
-        logger.error(reqData.get("total_fee"));
+        if (StringUtil.isEmpty(orderType)) {
+            Orders orders = (Orders) orderServer.getObjectById(id);
+            reqData.put("body", "达理网商城商品订单");
+            // 订单总金额，单位为分
+            reqData.put("total_fee", ((int) (orders.getTotalMoney() * 100)) + "");
+            logger.error(reqData.get("total_fee"));
+            reqData.put("scene_info", "{\"h5_info\": {\"type\":\"Wap\",\"wap_url\": \"http://www.dali5.com\",\"wap_name\": \"达礼网商城商品\"}}");
+        }else if("1".equals(orderType)){
+            reqData.put("body", "达理网汉学堂报名订单");
+            reqData.put("total_fee", ((int) (money * 100)) + "");
+            logger.error(reqData.get("total_fee"));
+            reqData.put("scene_info", "{\"h5_info\": {\"type\":\"Wap\",\"wap_url\": \"http://www.dali5.com\",\"wap_name\": \"达礼网汉学团报名\"}}");
+        }
         // APP和网页支付提交用户端ip，Native支付填调用微信支付API的机器IP。
         reqData.put("spbill_create_ip", "112.74.42.218");
         // 异步接收微信支付结果通知的回调地址，通知url必须为外网可访问的url，不能携带参数。
@@ -687,9 +773,6 @@ public class OrdersController {
         reqData.put("device_info", "WEB");
         // 附加数据，在查询API和支付通知中原样返回，可作为自定义参数使用。
         reqData.put("attach", "");
-        reqData.put("scene_info", "{\"h5_info\": {\"type\":\"Wap\",\"wap_url\": \"http://www.dali5.com\",\"wap_name\": \"达礼网商城商品\"}}");
-
-
         Map<String, String> responseMap = wxPay.unifiedOrder(reqData);
         String returnCode = responseMap.get("return_code");
         logger.error("responseMap:" + responseMap);
@@ -705,14 +788,11 @@ public class OrdersController {
     }
 
     /**
-     * @param request
-     * @param code
-     * @return Map
      * @Description 微信浏览器内微信支付/公众号支付(JSAPI)
      */
     @RequestMapping(value = "wxgzpay", method = RequestMethod.GET)
     @ResponseBody
-    public CommonResponse wxgzpay(HttpServletRequest request, String code,String id) {
+    public CommonResponse wxgzpay(String code,String id,String orderType,double money) {
         try {
             //页面获取openId接口
             String getopenid_url = "https://api.weixin.qq.com/sns/oauth2/access_token";
@@ -724,15 +804,24 @@ public class OrdersController {
             String openId= (String) jsonObject.get("openid");
             logger.error("------------------->>"+openId);
             Map<String, String> reqData = new HashMap<>();
-            Orders orders = (Orders) orderServer.getObjectById(id);
-            reqData.put("out_trade_no", orders.getId());
+            if(StringUtil.isEmpty(orderType)){
+                Orders orders = (Orders) orderServer.getObjectById(id);
+                reqData.put("body", "达理网商城商品订单");
+                // 订单总金额，单位为分
+                reqData.put("total_fee", ((int) (orders.getTotalMoney() * 100)) + "");
+                logger.error(reqData.get("total_fee"));
+                reqData.put("scene_info", "{\"h5_info\": {\"type\":\"Wap\",\"wap_url\": \"http://www.dali5.com\",\"wap_name\": \"达礼网商城商品\"}}");
+            }else if("1".equals(orderType)){
+                reqData.put("body", "达理网汉学堂报名订单");
+                // 订单总金额，单位为分
+                reqData.put("total_fee", ((int) (money * 100)) + "");
+                logger.error(reqData.get("total_fee"));
+                reqData.put("scene_info", "{\"h5_info\": {\"type\":\"Wap\",\"wap_url\": \"http://www.dali5.com\",\"wap_name\": \"达理网汉学堂报名\"}}");
+            }
+            reqData.put("out_trade_no", id);
             reqData.put("trade_type", "JSAPI");
             reqData.put("product_id", "1");
             reqData.put("openid", openId);
-            reqData.put("body", "达理网商城商品下单");
-            // 订单总金额，单位为分
-            reqData.put("total_fee", ((int) (orders.getTotalMoney() * 100)) + "");
-            logger.error(reqData.get("total_fee"));
             // APP和网页支付提交用户端ip，Native支付填调用微信支付API的机器IP。
             reqData.put("spbill_create_ip", "112.74.42.218");
             // 异步接收微信支付结果通知的回调地址，通知url必须为外网可访问的url，不能携带参数。
@@ -741,7 +830,6 @@ public class OrdersController {
             reqData.put("device_info", "WEB");
             // 附加数据，在查询API和支付通知中原样返回，可作为自定义参数使用。
             reqData.put("attach", "");
-            reqData.put("scene_info", "{\"h5_info\": {\"type\":\"Wap\",\"wap_url\": \"http://www.dali5.com\",\"wap_name\": \"达礼网商城商品\"}}");
             Map<String, String> responseMap = wxPay.unifiedOrder(reqData);
             String returnCode = responseMap.get("return_code");
             logger.error("------------------->>"+responseMap.toString());
@@ -765,12 +853,11 @@ public class OrdersController {
         }
     }
 
-
-
     @RequestMapping(value = "/wxNotify", produces = MediaType.APPLICATION_JSON_VALUE)
     @ResponseBody
     public void payNotify(HttpServletRequest request,HttpServletResponse httpResponse) throws Exception{
         logger.error("微信支付回调");
+        String url="http://www.dali5.com/shopping/paySuccess";
         InputStream inStream = request.getInputStream();
         ByteArrayOutputStream outSteam = new ByteArrayOutputStream();
         byte[] buffer = new byte[1024];
@@ -785,24 +872,38 @@ public class OrdersController {
             logger.error(notifyMap.toString());
             if("SUCCESS".equals(notifyMap.get("result_code"))&&"SUCCESS".equals(notifyMap.get("return_code"))){
                 Orders orders=(Orders) orderServer.getObjectById(notifyMap.get("out_trade_no"));
-                if(orders.getStatus()==0) {
+                RegistrationDetail registrationDetail=registrationServer.getRegistrationDetailByOrderId(notifyMap.get("out_trade_no"));
+                if(null!=orders&&orders.getStatus()==0) {
                     orders.setPayTime(new Date());
                     orders.setPayType(1);
                     orders.setPayNo(notifyMap.get("transaction_id"));
-                    orders.setStatus(1);
+                    List<OrderDetail> orderDetails=orderDetailServer.getOrderDetailByOrderId(orders.getId());
+                    for (OrderDetail orderDetail : orderDetails){
+                        Commodity commodity= (Commodity) commodityServer.getObjectById(orderDetail.getCommodityId());
+                        if(commodity.getType()==0){
+                            orders.setStatus(1);
+                        }else if(commodity.getType()==1){
+                            orders.setStatus(5);
+                            if(commodity.getIsVip()==1&&commodity.getStatus()!=2) {
+                                User user = userServer.getUserByUserCode(orders.createBy);
+                                user.setUserType(1);
+                                user.setTeamLevel(1);
+                                userServer.save(user);
+                            }
+                        }
+                        break;
+                    }
                     orderServer.save(orders);
-                    logger.info("支付成功");
+                }else if(null!=registrationDetail){
+                    registrationDetail.setStatus(1);
+                    registrationServer.saveDetail(registrationDetail);
                 }
             }
         }else{
             httpResponse.setContentType("text/html;charset=UTF-8");
             httpResponse.getWriter().write("微信支付完成！3秒钟跳到主页");
             //设置3秒钟跳转
-            if(payDev=="test"){
-                httpResponse.setHeader("refresh", "3;url=http://114.116.12.160:8080/shopping/paySuccess");
-            }else{
-                httpResponse.setHeader("refresh", "3;url=http://www.dali5.com/shopping/paySuccess");
-            }
+            httpResponse.setHeader("refresh", "3;url="+url);
         }
         outSteam.close();
         inStream.close();
@@ -842,11 +943,11 @@ public class OrdersController {
         Map<String, String> requstInfoMap = wxPayClient.decodeRefundNotify(request);
     }
 
-    @RequestMapping(value = "/testCalc",method = RequestMethod.GET)
+   /* @RequestMapping(value = "/testCalc",method = RequestMethod.GET)
     public void testCalc(@RequestParam("id")String id) throws Exception {
         Orders orders= (Orders) orderServer.getObjectById(id);
         calcProxyDetail(orders);
-    }
+    }*/
 
     private void calcProxyDetail(Orders orders) {
         String orderUserCode=orders.getCreateBy();

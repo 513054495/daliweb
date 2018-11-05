@@ -71,4 +71,10 @@ public interface UserServer extends BaseServer {
      * @return 推荐代理帐号
      */
     String getRecommendByCreateBy(String userCode);
+
+    /**
+     * 获取全部用户
+     * @return 全部用户
+     */
+    List<User> getAll();
 }

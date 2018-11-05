@@ -133,6 +133,7 @@ public class RegistrationServerImpl implements RegistrationServer {
                 if(!StringUtil.isEmpty(req.getCreateBy())){
                     list.add(criteriaBuilder.equal(root.get("createBy").as(String.class), req.getCreateBy()));
                 }
+                list.add(criteriaBuilder.equal(root.get("status").as(Integer.class), 1));
                 Predicate[] p = new Predicate[list.size()];
                 return criteriaBuilder.and(list.toArray(p));
             }
@@ -157,6 +158,7 @@ public class RegistrationServerImpl implements RegistrationServer {
                 if(!StringUtil.isEmpty(req.getCreateBy())){
                     list.add(criteriaBuilder.equal(root.get("createBy").as(String.class), req.getCreateBy()));
                 }
+                list.add(criteriaBuilder.equal(root.get("status").as(Integer.class), 1));
                 Predicate[] p = new Predicate[list.size()];
                 return criteriaBuilder.and(list.toArray(p));
             }
@@ -173,5 +175,10 @@ public class RegistrationServerImpl implements RegistrationServer {
     @Override
     public RegistrationDetail getRegistrationDetailByIdAndCreateBy(String id, String userCode) {
         return registrationDetailService.getRegistrationDetailByIdAndCreateBy(id,userCode);
+    }
+
+    @Override
+    public RegistrationDetail getRegistrationDetailByOrderId(String id) {
+        return registrationDetailService.getRegistrationDetailByOrderId(id);
     }
 }

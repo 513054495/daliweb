@@ -11,6 +11,7 @@ public class ShoppingCartSaveReq extends CommonRequest {
     private String commodityId;
     private int num;
     private String createBy;
+    private String specification;
 
     public String getCommodityId() {
         return commodityId;
@@ -34,5 +35,13 @@ public class ShoppingCartSaveReq extends CommonRequest {
 
     public void setCreateBy(String createBy) {
         this.createBy = createBy;
+    }
+
+    public String getSpecification() {
+        return specification;
+    }
+
+    public void setSpecification(String specification) {
+        this.specification = specification;
     }
 }

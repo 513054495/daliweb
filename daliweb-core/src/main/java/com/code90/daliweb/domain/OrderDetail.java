@@ -37,6 +37,9 @@ public class OrderDetail extends BaseDomain {
     //实际支付金额
     @Column
     private double money;
+    //规格
+    @Column
+    private String specification;
 
     public String getOrderId() {
         return orderId;
@@ -91,5 +94,13 @@ public class OrderDetail extends BaseDomain {
 
     public void setMoney(double money) {
         this.money = money;
+    }
+
+    public String getSpecification() {
+        return specification;
+    }
+
+    public void setSpecification(String specification) {
+        this.specification = specification;
     }
 }

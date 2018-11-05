@@ -13,6 +13,7 @@ public class UserRegisterReq extends CommonRequest {
     private String dlwPsw;
     private String phone;
     private String shareCode;
+    private String verificationCode;
 
     public String getUserCode() {
         return userCode;
@@ -44,5 +45,13 @@ public class UserRegisterReq extends CommonRequest {
 
     public void setShareCode(String shareCode) {
         this.shareCode = shareCode;
+    }
+
+    public String getVerificationCode() {
+        return verificationCode;
+    }
+
+    public void setVerificationCode(String verificationCode) {
+        this.verificationCode = verificationCode;
     }
 }

@@ -21,6 +21,7 @@ public class CommodityChangeReq extends CommonRequest {
     private int isVip;
     private double deduction;
     private int status;
+    private String specificationList;
 
     public String getName() {
         return name;
@@ -108,5 +109,13 @@ public class CommodityChangeReq extends CommonRequest {
 
     public void setDescPic(String descPic) {
         this.descPic = descPic;
+    }
+
+    public String getSpecificationList() {
+        return specificationList;
+    }
+
+    public void setSpecificationList(String specificationList) {
+        this.specificationList = specificationList;
     }
 }

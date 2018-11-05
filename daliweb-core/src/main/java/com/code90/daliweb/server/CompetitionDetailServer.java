@@ -40,4 +40,11 @@ public interface CompetitionDetailServer extends BaseServer {
      * @return 竞赛详细
      */
     List<CompetitionDetail> getDetailByCompetitionId(String id);
+
+    /**
+     * 根据用户获取竞赛记录
+     * @param userCode
+     * @return 竞赛记录
+     */
+    List<CompetitionDetail> getCompetitionDetailByUserCode(String userCode);
 }

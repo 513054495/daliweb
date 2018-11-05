@@ -73,4 +73,11 @@ public interface RegistrationServer extends BaseServer {
      * @return 报名详情
      */
     RegistrationDetail getRegistrationDetailByIdAndCreateBy(String id, String userCode);
+
+    /**
+     * 根据订单号获取报名详情
+     * @param id
+     * @return 报名详情
+     */
+    RegistrationDetail getRegistrationDetailByOrderId(String id);
 }

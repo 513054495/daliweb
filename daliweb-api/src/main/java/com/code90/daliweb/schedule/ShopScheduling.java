@@ -1,5 +1,6 @@
 package com.code90.daliweb.schedule;
 
+import com.code90.daliweb.conf.RedisServer;
 import com.code90.daliweb.domain.*;
 import com.code90.daliweb.request.shop.OrderSearchReq;
 import com.code90.daliweb.server.*;
@@ -38,6 +39,10 @@ public class ShopScheduling {
     private RuleServer ruleServer;
     @Autowired
     private RedPackageServer redPackageServer;
+    @Autowired
+    private RedisServer redisServer;
+    @Autowired
+    private UserServer userServer;
 
     @Scheduled(cron="0 0 2 * * ? ")
     public void orderConfirm(){
@@ -69,8 +74,14 @@ public class ShopScheduling {
                 List<OrderDetail> orderDetails1=orderDetailServer.getOrderDetailByOrderId(orders.getId());
                 for(OrderDetail orderDetail : orderDetails1){
                     if(orderDetail.getStatus()!=2){
+                        Commodity commodity = (Commodity) commodityServer.getObjectById(orderDetail.getCommodityId());
+                        if(commodity.getIsVip()==1) {
+                            User user = userServer.getUserByUserCode(orders.createBy);
+                            user.setUserType(1);
+                            user.setTeamLevel(1);
+                            userServer.save(user);
+                        }
                         if(rules.getType()==0) {
-                            Commodity commodity = (Commodity) commodityServer.getObjectById(orderDetail.getCommodityId());
                             money += orderDetail.getOrderNum() * commodity.getPrice();
                         }else{
                             money += orderDetail.getMoney();
@@ -109,9 +120,8 @@ public class ShopScheduling {
                 }
                 List<OrderDetail> orderDetails=orderDetailServer.getOrderDetailByOrderId(orders.getId());
                 for (OrderDetail orderDetail : orderDetails){
-                    Commodity commodity= (Commodity) commodityServer.getObjectById(orderDetail.getCommodityId());
-                    commodity.setTotalNum(commodity.getTotalNum()+orderDetail.getOrderNum());
-                    commodityServer.save(commodity);
+                    int num=redisServer.getNum(orderDetail.getCommodityId());
+                    redisServer.setValue(orderDetail.getCommodityId(),(num+orderDetail.getOrderNum())+"");
                 }
             }
         }

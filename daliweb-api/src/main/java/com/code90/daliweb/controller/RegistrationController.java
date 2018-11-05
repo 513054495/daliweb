@@ -144,13 +144,19 @@ public class RegistrationController {
      * @return 报名
      */
     @RequestMapping(value="/getRegistrationById",method=RequestMethod.GET)
-    public CommonResponse getRegistrationById(@RequestParam("id")String id){
+    public CommonResponse getRegistrationById(@RequestParam("id")String id,String userCode){
         try{
             CommonResponse response=new CommonResponse("获取成功");
             Registration registration=(Registration) registrationServer.getObjectById(id);
-            if(registration!=null){
+            RegistrationVo registrationVo=new RegistrationVo();
+            BeanUtils.copyProperties(registration,registrationVo);
+            RegistrationDetail registrationDetail=registrationServer.getRegistrationDetailByIdAndCreateBy(registration.getId(),userCode);
+            if(null!=registrationDetail){
+                registrationVo.setIsRegistration(1);
+            }
+            if(registrationVo!=null){
                 logger.info("获取成功");
-                response.addNewDate("info",registration);
+                response.addNewDate("info",registrationVo);
                 return response;
             }else {
                 logger.error("获取失败");
@@ -194,15 +200,18 @@ public class RegistrationController {
     @RequestMapping(value="/getRegistrationByUserCode",method=RequestMethod.GET)
     public CommonResponse getRegistrationDetailByUserCode(@RequestParam("userCode")String userCode){
         try{
+            updateState();
             CommonResponse response=new CommonResponse("获取成功");
             List<Registration> registrations=registrationServer.getAllPublishRegistration();
             List<RegistrationVo> registrationVos=new ArrayList<>();
             for (Registration registration :registrations){
                 RegistrationVo registrationVo=new RegistrationVo();
                 BeanUtils.copyProperties(registration,registrationVo);
-                RegistrationDetail registrationDetail=registrationServer.getRegistrationDetailByIdAndCreateBy(registration.getId(),userCode);
-                if(null!=registrationDetail){
-                    registrationVo.setIsRegistration(1);
+                if(!StringUtil.isEmpty(userCode)) {
+                    RegistrationDetail registrationDetail = registrationServer.getRegistrationDetailByIdAndCreateBy(registration.getId(), userCode);
+                    if (null != registrationDetail) {
+                        registrationVo.setIsRegistration(1);
+                    }
                 }
                 registrationVos.add(registrationVo);
             }
@@ -273,6 +282,7 @@ public class RegistrationController {
      */
     @RequestMapping(value="/getRegistrations",method=RequestMethod.GET)
     public CommonResponse getRegistrations(RegistrationSearchReq req){
+        updateState();
         int page=req.getPage()==0?0:req.getPage()-1;
         int pageSize=req.getPageSize()==0?10:req.getPageSize();
         List<Registration> allRegistration=registrationServer.getAll(req);
@@ -300,7 +310,21 @@ public class RegistrationController {
         int total=allRegistrationDetail.size();
         int totalPage=total%pageSize==0?total/pageSize:total/pageSize+1;
         List<RegistrationDetail> registrationDetails=registrationServer.findRegistrationDetailCriteria(page,pageSize,req);
-        CommonResponse response= new CommonResponse("获取成功","info",registrationDetails);
+        List<RegistrationDetailVo> registrationDetailVos=new ArrayList<>();
+        for(RegistrationDetail registrationDetail:registrationDetails){
+            RegistrationDetailVo registrationDetailVo=new RegistrationDetailVo();
+            BeanUtils.copyProperties(registrationDetail,registrationDetailVo);
+            Registration registration= (Registration) registrationServer.getObjectById(registrationDetail.getRegistrationId());
+            if(null!=registration){
+                registrationDetailVo.setLastTime(registration.getLastTime());
+                registrationDetailVo.setPostalCode(registration.getPostalCode());
+                registrationDetailVo.setArea(registration.getArea());
+                registrationDetailVo.setRegistrationName(registration.getName());
+                registrationDetailVo.setMoney(registration.getMoney());
+            }
+            registrationDetailVos.add(registrationDetailVo);
+        }
+        CommonResponse response= new CommonResponse("获取成功","info",registrationDetailVos);
         response.addNewDate("pageNum",page+1);
         response.addNewDate("pageSize",pageSize);
         response.addNewDate("total",total);
@@ -429,5 +453,15 @@ public class RegistrationController {
         excelDatas.add(registrationExcel);
         String fileName = registrationName+"报名信息" + DateUtils.dateToDateString(new Date(), DateUtils.ZHCN_DATATIMEF_STR) + ".xls";
         ExcelUtils.exportExcel(response, fileName, excelDatas);
+    }
+
+    private void updateState() {
+        List<Registration> registrations=registrationServer.getAllPublishRegistration();
+        for (Registration registration : registrations){
+            if(registration.getStatus()==1&&new Date().after(registration.getLastTime())){
+                registration.setStatus(2);
+            }
+            registrationServer.save(registration);
+        }
     }
 }

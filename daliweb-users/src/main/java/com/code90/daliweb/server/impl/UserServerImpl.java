@@ -219,4 +219,9 @@ public class UserServerImpl implements UserServer {
         return recommendService.getRecommendByCreateBy(userCode);
     }
 
+    @Override
+    public List<User> getAll() {
+        return userService.findAll();
+    }
+
 }

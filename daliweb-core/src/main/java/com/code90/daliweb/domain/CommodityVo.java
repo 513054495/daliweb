@@ -20,6 +20,8 @@ public class CommodityVo extends  BaseDomain{
     private int totalNum;
     private String refundReason;
     private double money;
+    private String specificationList;
+    private String specification;
 
     public String getId() {
         return id;
@@ -131,5 +133,21 @@ public class CommodityVo extends  BaseDomain{
 
     public void setMoney(double money) {
         this.money = money;
+    }
+
+    public String getSpecificationList() {
+        return specificationList;
+    }
+
+    public void setSpecificationList(String specificationList) {
+        this.specificationList = specificationList;
+    }
+
+    public String getSpecification() {
+        return specification;
+    }
+
+    public void setSpecification(String specification) {
+        this.specification = specification;
     }
 }

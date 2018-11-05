@@ -14,6 +14,6 @@ public interface ShoppingCartService extends JpaRepository<ShoppingCart,Integer>
     @Query("select s from ShoppingCart s where s.id=?1 ")
     ShoppingCart getShoppingCartById(String id);
 
-    @Query("select s from ShoppingCart s where s.commodityId=?1 and s.createBy=?2 ")
-    ShoppingCart getShoppingCartByCommodityIdAndcreateBy(String commodityId, String createBy);
+    @Query("select s from ShoppingCart s where s.commodityId=?1 and s.createBy=?2 and s.specification=?3")
+    ShoppingCart getShoppingCartByCommodityIdAndcreateBy(String commodityId, String createBy,String specification);
 }

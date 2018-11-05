@@ -35,5 +35,5 @@ public interface ShoppingCartServer extends BaseServer {
      * @param createBy 用户帐号
      * @return 购物车信息
      */
-    ShoppingCart getShoppingCartByCommodityIdAndcreateBy(String commodityId, String createBy);
+    ShoppingCart getShoppingCartByCommodityIdAndcreateBy(String commodityId, String createBy,String specification);
 }

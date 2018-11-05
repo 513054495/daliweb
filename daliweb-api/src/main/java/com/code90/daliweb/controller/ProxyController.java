@@ -79,6 +79,13 @@ public class ProxyController {
                 proxy.setBankCode(bankCode);
             }
             proxy.setStatus(status);
+            if(status==1){
+                User user=userServer.getUserByUserCode(proxy.createBy);
+                if(null!=user){
+                    user.setAgencyLevel(0);
+                    userServer.save(user);
+                }
+            }
             proxyServer.save(proxy);
             logger.info("代理修改成功");
             return new CommonResponse("修改成功");
