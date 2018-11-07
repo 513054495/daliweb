@@ -11,7 +11,6 @@ import com.code90.daliweb.request.CommonRequest;
 public class UserRegisterReq extends CommonRequest {
     private String userCode;
     private String dlwPsw;
-    private String phone;
     private String shareCode;
     private String verificationCode;
 
@@ -29,14 +28,6 @@ public class UserRegisterReq extends CommonRequest {
 
     public void setDlwPsw(String dlwPsw) {
         this.dlwPsw = dlwPsw;
-    }
-
-    public String getPhone() {
-        return phone;
-    }
-
-    public void setPhone(String phone) {
-        this.phone = phone;
     }
 
     public String getShareCode() {

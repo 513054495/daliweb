@@ -90,13 +90,28 @@ public class OrdersController {
      */
     @RequestMapping(value = "/vaildOrder", method = RequestMethod.POST)
     public CommonResponse vaildOrder1(@RequestBody OrdersSaveReq req) {
+       String str=req.getTotalMoney()+"";
+       int totalNum=0;
+       for(OrderDetailSaveReq orderDetailSaveReq : req.getOrderDetailSaveReqs()){
+           totalNum+=orderDetailSaveReq.getOrderNum();
+       }
+       str += totalNum;
+       if(StringUtil.isEmpty(req.getaSqzwx())||!req.getaSqzwx().equals(getMd5Code(str))){
+           logger.error("订单校验失败，数据不符合");
+           return new CommonResponse("订单校验失败，数据不符合", 1);
+       }
        if(vaildOrder(req.getOrderDetailSaveReqs())){
            logger.info("校验成功");
            return new CommonResponse("校验成功");
        }else{
-           logger.error("订单提交失败，库存失败");
-           return new CommonResponse("订单提交失败，库存失败", 1);
+           logger.error("订单提交失败，库存不足");
+           return new CommonResponse("订单提交失败，库存不足", 1);
        }
+    }
+
+    private String getMd5Code(String str){
+        str+="jdkodfvdss324fjKd43545sZkxOP98icjxzlc";
+        return MD5Util.getMD5String(str);
     }
 
     /**
@@ -107,6 +122,16 @@ public class OrdersController {
     @RequestMapping(value = "/addOrder", method = RequestMethod.POST)
     public CommonResponse addOrder(@RequestBody OrdersSaveReq req) {
         try {
+            String str=req.getTotalMoney()+"";
+            int totalNum=0;
+            for(OrderDetailSaveReq orderDetailSaveReq : req.getOrderDetailSaveReqs()){
+                totalNum+=orderDetailSaveReq.getOrderNum();
+            }
+            str += totalNum;
+            if(!req.getaSqzwx().equals(getMd5Code(str))){
+                logger.error("订单提交失败，数据不符合");
+                return new CommonResponse("订单提交失败，数据不符合", 1);
+            }
             if(vaildOrder(req.getOrderDetailSaveReqs())) {
                 Orders order = new Orders();
                 BeanUtils.copyProperties(req, order);
@@ -615,7 +640,7 @@ public class OrdersController {
     }
 
     @RequestMapping(value = "/alipay", method = RequestMethod.GET)
-    public CommonResponse alipay(HttpServletResponse httpResponse, @RequestParam("id") String id,String orderType,double money) throws IOException {
+    public CommonResponse alipay(HttpServletResponse httpResponse, @RequestParam("id") String id,String orderType,double money,String aSqzwx) throws IOException {
         AlipayClient alipayClient = null;
         if (payDev.equals("dev")) {
             alipayClient = new DefaultAlipayClient(server_url, app_id, private_key_test, format, charset, alipay_public_key_test, sign_type);
@@ -638,11 +663,15 @@ public class OrdersController {
                         " \"product_code\":\"QUICK_WAP_PAY\"" +
                         " ,\"subject\":\"达礼网商城订单\"}";
             } else {
-                logger.info("提交支付失败，订单不存在或者订单状态不正确");
-                return new CommonResponse("提交支付失败，订单不存在或者订单状态不正确");
+                logger.error("提交支付失败，订单不存在或者订单状态不正确");
+                return new CommonResponse("提交支付失败，订单不存在或者订单状态不正确",7);
             }
         }else if("1".equals(orderType)){
             //报名订单
+            if(StringUtil.isEmpty(aSqzwx)||!aSqzwx.equals(getMd5Code(money+""))){
+                logger.info("提交支付失败，数据与订单不符合");
+                return new CommonResponse("提交支付失败，数据与订单不符合",7);
+            }
             bizContent += "\"out_trade_no\":\"" + id + "\"," +
                     " \"total_amount\":\"" + money + "\"," +
                     " \"product_code\":\"QUICK_WAP_PAY\"" +
@@ -691,7 +720,6 @@ public class OrdersController {
                     if(commodity.getIsVip()==1&&commodity.getStatus()!=2) {
                         User user = userServer.getUserByUserCode(orders.createBy);
                         user.setUserType(1);
-                        user.setTeamLevel(1);
                         userServer.save(user);
                     }
                 }
@@ -747,7 +775,7 @@ public class OrdersController {
     }
 
     @RequestMapping(value = "/wxpay", method = RequestMethod.GET)
-    public void wxpay(@RequestParam("id") String id, HttpServletResponse response,String orderType,double money) throws Exception {
+    public void wxpay(@RequestParam("id") String id, HttpServletResponse response,String orderType,double money,String aSqzwx) throws Exception {
         Map<String, String> reqData = new HashMap<>();
         reqData.put("out_trade_no", id);
         reqData.put("trade_type", "MWEB");
@@ -760,6 +788,10 @@ public class OrdersController {
             logger.error(reqData.get("total_fee"));
             reqData.put("scene_info", "{\"h5_info\": {\"type\":\"Wap\",\"wap_url\": \"http://www.dali5.com\",\"wap_name\": \"达礼网商城商品\"}}");
         }else if("1".equals(orderType)){
+            if(StringUtil.isEmpty(aSqzwx)||!aSqzwx.equals(getMd5Code(money+""))){
+                logger.error("提交支付失败，数据与订单不符合");
+                throw new Exception("提交支付失败，数据与订单不符合");
+            }
             reqData.put("body", "达理网汉学堂报名订单");
             reqData.put("total_fee", ((int) (money * 100)) + "");
             logger.error(reqData.get("total_fee"));
@@ -792,26 +824,30 @@ public class OrdersController {
      */
     @RequestMapping(value = "wxgzpay", method = RequestMethod.GET)
     @ResponseBody
-    public CommonResponse wxgzpay(String code,String id,String orderType,double money) {
+    public CommonResponse wxgzpay(String code,String id,String orderType,double money,String aSqzwx) {
         try {
             //页面获取openId接口
             String getopenid_url = "https://api.weixin.qq.com/sns/oauth2/access_token";
             String param = "appid=wx8ca5f07c892b9380&secret=08b108a6e1cedd0b59ec90c0cbbaf911" + "&code=" + code + "&grant_type=authorization_code";
             //向微信服务器发送get请求获取openIdStr
             String openIdStr = HttpUtil.sendGet(getopenid_url, param);
-            logger.error("------------------->>"+openIdStr);
+            logger.info("------------------->>"+openIdStr);
             JSONObject jsonObject =JSONObject.parseObject(openIdStr);
             String openId= (String) jsonObject.get("openid");
-            logger.error("------------------->>"+openId);
+            logger.info("------------------->>"+openId);
             Map<String, String> reqData = new HashMap<>();
             if(StringUtil.isEmpty(orderType)){
                 Orders orders = (Orders) orderServer.getObjectById(id);
                 reqData.put("body", "达理网商城商品订单");
                 // 订单总金额，单位为分
                 reqData.put("total_fee", ((int) (orders.getTotalMoney() * 100)) + "");
-                logger.error(reqData.get("total_fee"));
+                logger.info(reqData.get("total_fee"));
                 reqData.put("scene_info", "{\"h5_info\": {\"type\":\"Wap\",\"wap_url\": \"http://www.dali5.com\",\"wap_name\": \"达礼网商城商品\"}}");
             }else if("1".equals(orderType)){
+                if(StringUtil.isEmpty(aSqzwx)||!aSqzwx.equals(getMd5Code(money+""))){
+                    logger.error("提交支付失败，数据与订单不符合");
+                    return new CommonResponse("提交支付失败，数据与订单不符合",7);
+                }
                 reqData.put("body", "达理网汉学堂报名订单");
                 // 订单总金额，单位为分
                 reqData.put("total_fee", ((int) (money * 100)) + "");
@@ -832,7 +868,7 @@ public class OrdersController {
             reqData.put("attach", "");
             Map<String, String> responseMap = wxPay.unifiedOrder(reqData);
             String returnCode = responseMap.get("return_code");
-            logger.error("------------------->>"+responseMap.toString());
+            logger.info("------------------->>"+responseMap.toString());
             //以下内容是返回前端页面的json数据
             String prepay_id = "";//预支付id
             if (returnCode.equals("SUCCESS")) {
@@ -846,10 +882,11 @@ public class OrdersController {
             payMap.put("package", "prepay_id=" + prepay_id);
             String paySign = WXPayUtil.generateSignature(payMap,"zmsjke873hs62hakw0lsuwhy61gwjsmd");
             payMap.put("paySign", paySign);
+            logger.info("获取成功");
             return new CommonResponse("获取成功","info",payMap);
         } catch (Exception e) {
-            e.printStackTrace();
-            return new CommonResponse("获取失败");
+            logger.error("获取失败",e.getMessage());
+            return new CommonResponse("获取失败",7,e);
         }
     }
 
@@ -887,7 +924,6 @@ public class OrdersController {
                             if(commodity.getIsVip()==1&&commodity.getStatus()!=2) {
                                 User user = userServer.getUserByUserCode(orders.createBy);
                                 user.setUserType(1);
-                                user.setTeamLevel(1);
                                 userServer.save(user);
                             }
                         }

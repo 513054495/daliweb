@@ -31,14 +31,23 @@ public class LearnScheduling {
     public void addLevel(){
         List<User> users=userServer.getAll();
         for(User user : users){
-            if(user.getTeamLevel()==1&&user.getPoint()>=200){
-                user.setTeamLevel(2);
+            if(user.getTeamLevel()==0&&user.getPoint()>=100){
+                user.setTeamLevel(1);
                 userServer.save(user);
-            }else if(user.getTeamLevel()==2&&user.getPoint()>=300){
+            }else if(user.getTeamLevel()==1&&user.getPoint()>=200){
                 List<CompetitionDetail> competitionDetails=competitionDetailServer.getCompetitionDetailByUserCode(user.getUserCode());
                 if(competitionDetails.size()>0){
-                    user.setTeamLevel(3);
+                    user.setTeamLevel(2);
                     userServer.save(user);
+                }
+            }else if(user.getTeamLevel()==2&&user.getPoint()>=300){
+                List<CompetitionDetail> competitionDetails=competitionDetailServer.getCompetitionDetailByUserCode(user.getUserCode());
+                for (CompetitionDetail competitionDetail:competitionDetails){
+                    if(competitionDetail.getStatus()==1){
+                        user.setTeamLevel(3);
+                        userServer.save(user);
+                        break;
+                    }
                 }
             }
         }

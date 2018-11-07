@@ -78,7 +78,6 @@ public class ShopScheduling {
                         if(commodity.getIsVip()==1) {
                             User user = userServer.getUserByUserCode(orders.createBy);
                             user.setUserType(1);
-                            user.setTeamLevel(1);
                             userServer.save(user);
                         }
                         if(rules.getType()==0) {

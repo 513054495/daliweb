@@ -114,6 +114,28 @@ public class UserController {
     }
 
     /**
+     * 强制修改密码
+     * @param req 密码信息
+     * @return 修改结果
+     */
+    @RequestMapping(value="/daliweb/user/forceEditPsw",method = RequestMethod.POST)
+    public CommonResponse forceEditPsw(@RequestBody UserChangePswReq req){
+        try {
+            User user=(User)userServer.getObjectById(req.getId());
+            if(user!=null&&!StringUtil.isEmpty(req.getNewDlwPsw())){
+                user.setDlwPsw(MD5Util.getMD5String(req.getNewDlwPsw()));
+            }
+            userServer.save(user);
+            logger.info("用户修改密码成功");
+            return new CommonResponse("修改密码成功");
+        }catch (Exception e){
+            logger.error("修改密码失败，原因："+e.getMessage());
+            return new CommonResponse("修改密码失败",2,e);
+        }
+    }
+
+
+    /**
      * 删除用户
      * @param ids 用户编号
      * @return 删除结果
@@ -232,8 +254,8 @@ public class UserController {
     @RequestMapping(value = "/register",method = RequestMethod.POST)
     public CommonResponse register(@RequestBody UserRegisterReq req){
         try {
-            String str="p"+redisServer.getValue(req.getUserCode());
-            if(!str.equals(req.getVerificationCode())){
+            String str=redisServer.getValue("register"+req.getUserCode());
+            if(null==str||!str.equals(req.getVerificationCode())){
                 logger.error("保存失败，原因：验证码不正确");
                 return new CommonResponse("保存失败，原因：验证码不正确",1);
             }
@@ -243,6 +265,7 @@ public class UserController {
             user.setShareCode(IdUtils.createShareCode());
             user.setUserName("达理网用户");
             user.setNickname("达理网用户");
+            user.setPhone(req.getUserCode());
             User recommendUser=userServer.getUserByShareCode(req.getShareCode());
             if(null!=recommendUser){
                 Recommend recommend=new Recommend();
@@ -401,12 +424,12 @@ public class UserController {
         //必填:短信签名-可在短信控制台中找到
         request.setSignName("达礼网");
         //必填:短信模板-可在短信控制台中找到，发送国际/港澳台消息时，请使用国际/港澳台短信模版
-        request.setTemplateCode("SMS_144740372");
+        request.setTemplateCode("SMS_150174052");
         //可选:模板中的变量替换JSON串,如模板内容为"亲爱的${name},您的验证码为${code}"时,此处的值为
         //友情提示:如果JSON中需要带换行符,请参照标准的JSON协议对换行符的要求,比如短信内容中包含\r\n的情况在JSON中需要表示成\\r\\n,否则会导致JSON在服务端解析失败
         //request.setTemplateParam("{\"code\":\"988756\"}");
         String msgCode = getMsgCode();
-        redisServer.setValue("p"+phone,msgCode,10);
+        redisServer.setValue("register"+phone,msgCode,10);
         request.setTemplateParam("{\"code\":\"" + msgCode + "\"}");
         //请求失败这里会抛ClientException异常
         SendSmsResponse sendSmsResponse = acsClient.getAcsResponse(request);

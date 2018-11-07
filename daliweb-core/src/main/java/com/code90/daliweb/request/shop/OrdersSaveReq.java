@@ -23,6 +23,7 @@ public class OrdersSaveReq extends CommonRequest {
     private int status;
     private String createBy;
     private int isShoppingCart;
+    private String aSqzwx;
     private List<OrderDetailSaveReq> orderDetailSaveReqs=new ArrayList<>();
 
     public String getReceiver() {
@@ -127,5 +128,13 @@ public class OrdersSaveReq extends CommonRequest {
 
     public void setIsShoppingCart(int isShoppingCart) {
         this.isShoppingCart = isShoppingCart;
+    }
+
+    public String getaSqzwx() {
+        return aSqzwx;
+    }
+
+    public void setaSqzwx(String aSqzwx) {
+        this.aSqzwx = aSqzwx;
     }
 }
