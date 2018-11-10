@@ -136,20 +136,25 @@ public class WithdrawController {
      */
     @RequestMapping(value="/getWithdrawMoneyByUserCode",method=RequestMethod.GET)
     public CommonResponse getWithdrawMoneyByUserCode(@RequestParam("userCode")String userCode){
-        CommonResponse response=new CommonResponse("获取成功");
-        Rules rules= (Rules) ruleServer.getObjectById(1+"");
-        double proxyMoney=proxyServer.getAllMoneyByUserCode(userCode);
-        double withdrawMoney=withdrawServer.getAllMoneyByUserCode(userCode);
-        double totalMoney=proxyMoney-withdrawMoney;
-        logger.info("获取成功");
-        Proxy proxy=proxyServer.getProxyByUserCode(userCode);
-        NumberFormat nf=NumberFormat.getNumberInstance() ;
-        nf.setMaximumFractionDigits(2);
-        response.addNewDate("withdrawNum",rules.getWithdrawNum());
-        response.addNewDate("bankName",proxy.getBankName());
-        response.addNewDate("bankCode",proxy.getBankCode().substring(proxy.getBankCode().length()-4));
-        response.addNewDate("totalMoney", nf.format(totalMoney));
-        return response;
+        try{
+            CommonResponse response=new CommonResponse("获取成功");
+            Rules rules= (Rules) ruleServer.getObjectById(1+"");
+            double proxyMoney=proxyServer.getAllMoneyByUserCode(userCode);
+            double withdrawMoney=withdrawServer.getAllMoneyByUserCode(userCode);
+            double totalMoney=proxyMoney-withdrawMoney;
+            logger.info("获取成功");
+            Proxy proxy=proxyServer.getProxyByUserCode(userCode);
+            NumberFormat nf=NumberFormat.getNumberInstance() ;
+            nf.setMaximumFractionDigits(2);
+            response.addNewDate("withdrawNum",rules.getWithdrawNum());
+            response.addNewDate("bankName",proxy.getBankName());
+            response.addNewDate("bankCode",proxy.getBankCode().substring(proxy.getBankCode().length()-4));
+            response.addNewDate("totalMoney", nf.format(totalMoney));
+            return response;
+        }catch (Exception e){
+            logger.error("获取失败,原因："+e.getMessage());
+            return new CommonResponse("获取失败",2,e);
+        }
     }
 
     /**

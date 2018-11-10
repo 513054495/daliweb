@@ -42,4 +42,5 @@
     <dubbo:reference interface="com.code90.daliweb.server.WithdrawServer" id="withdrawServer" retries="2" timeout="5000" cluster="failfast"></dubbo:reference>
     <dubbo:reference interface="com.code90.daliweb.server.RegistrationServer" id="registrationServer" retries="2" timeout="5000" cluster="failfast"></dubbo:reference>
     <dubbo:reference interface="com.code90.daliweb.server.LeaveMessageServer" id="leaveMessageServer" retries="2" timeout="5000" cluster="failfast"></dubbo:reference>
+    <dubbo:reference interface="com.code90.daliweb.server.AnnouncementServer" id="announcementServer" retries="2" timeout="5000" cluster="failfast"></dubbo:reference>
 </beans>
