@@ -145,4 +145,9 @@ public class SubjectServerImpl implements SubjectServer {
             return subjectService.getMaxSubjectByExam();
         }
     }
+
+    @Override
+    public List<Subject> getAllByExam() {
+        return subjectService.getAllByExam();
+    }
 }

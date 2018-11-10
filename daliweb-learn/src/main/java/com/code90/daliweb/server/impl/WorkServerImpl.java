@@ -99,8 +99,8 @@ public class WorkServerImpl implements WorkServer {
     }
 
     @Override
-    public List<Work> getObjectByWorkPersons(String userCode) {
-        List<Work> works=workService.findAll();
+    public List<Work> getPublishWorks() {
+        List<Work> works=workService.getPublishWorks();
         return works;
     }
 }

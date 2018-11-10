@@ -99,18 +99,4 @@ public class ExamServerImpl implements ExamServer {
         return examService.findAll();
     }
 
-    @Override
-    public List<Exam> getExamByUserCode(String userCode) {
-        List<Exam> exams=examService.findAll();
-        List<Exam> return_list=new ArrayList<>();
-        for (Exam exam :exams){
-            String[] examPersons=exam.getExamPersons().split(",");
-            for(String examPerson :examPersons){
-                if(userCode.equals(examPerson)){
-                    return_list.add(exam);
-                }
-            }
-        }
-        return  return_list;
-    }
 }

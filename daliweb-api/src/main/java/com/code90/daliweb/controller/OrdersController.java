@@ -31,6 +31,7 @@ import org.springframework.web.bind.annotation.*;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.*;
+import java.text.NumberFormat;
 import java.util.*;
 
 /**
@@ -90,12 +91,13 @@ public class OrdersController {
      */
     @RequestMapping(value = "/vaildOrder", method = RequestMethod.POST)
     public CommonResponse vaildOrder1(@RequestBody OrdersSaveReq req) {
-       String str=req.getTotalMoney()+"";
+       String str=(int)(req.getTotalMoney()*100)+"";
        int totalNum=0;
        for(OrderDetailSaveReq orderDetailSaveReq : req.getOrderDetailSaveReqs()){
            totalNum+=orderDetailSaveReq.getOrderNum();
        }
        str += totalNum;
+       logger.info("------------------>"+str);
        if(StringUtil.isEmpty(req.getaSqzwx())||!req.getaSqzwx().equals(getMd5Code(str))){
            logger.error("订单校验失败，数据不符合");
            return new CommonResponse("订单校验失败，数据不符合", 1);
@@ -122,7 +124,7 @@ public class OrdersController {
     @RequestMapping(value = "/addOrder", method = RequestMethod.POST)
     public CommonResponse addOrder(@RequestBody OrdersSaveReq req) {
         try {
-            String str=req.getTotalMoney()+"";
+            String str=(int)(req.getTotalMoney()*100)+"";
             int totalNum=0;
             for(OrderDetailSaveReq orderDetailSaveReq : req.getOrderDetailSaveReqs()){
                 totalNum+=orderDetailSaveReq.getOrderNum();
@@ -668,7 +670,7 @@ public class OrdersController {
             }
         }else if("1".equals(orderType)){
             //报名订单
-            if(StringUtil.isEmpty(aSqzwx)||!aSqzwx.equals(getMd5Code(money+""))){
+            if(StringUtil.isEmpty(aSqzwx)||!aSqzwx.equals(getMd5Code((int)(money*100)+""))){
                 logger.info("提交支付失败，数据与订单不符合");
                 return new CommonResponse("提交支付失败，数据与订单不符合",7);
             }
@@ -788,7 +790,7 @@ public class OrdersController {
             logger.error(reqData.get("total_fee"));
             reqData.put("scene_info", "{\"h5_info\": {\"type\":\"Wap\",\"wap_url\": \"http://www.dali5.com\",\"wap_name\": \"达礼网商城商品\"}}");
         }else if("1".equals(orderType)){
-            if(StringUtil.isEmpty(aSqzwx)||!aSqzwx.equals(getMd5Code(money+""))){
+            if(StringUtil.isEmpty(aSqzwx)||!aSqzwx.equals(getMd5Code((int)(money*100)+""))){
                 logger.error("提交支付失败，数据与订单不符合");
                 throw new Exception("提交支付失败，数据与订单不符合");
             }
@@ -844,7 +846,7 @@ public class OrdersController {
                 logger.info(reqData.get("total_fee"));
                 reqData.put("scene_info", "{\"h5_info\": {\"type\":\"Wap\",\"wap_url\": \"http://www.dali5.com\",\"wap_name\": \"达礼网商城商品\"}}");
             }else if("1".equals(orderType)){
-                if(StringUtil.isEmpty(aSqzwx)||!aSqzwx.equals(getMd5Code(money+""))){
+                if(StringUtil.isEmpty(aSqzwx)||!aSqzwx.equals(getMd5Code((int)(money*100)+""))){
                     logger.error("提交支付失败，数据与订单不符合");
                     return new CommonResponse("提交支付失败，数据与订单不符合",7);
                 }

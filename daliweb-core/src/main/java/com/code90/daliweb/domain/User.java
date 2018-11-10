@@ -103,6 +103,9 @@ public class User extends BaseDomain {
     @Column
     @Lob
     private String description;
+    //冻结
+    @Column
+    private int isFreeze;
 
     public User() {
     }
@@ -330,5 +333,13 @@ public class User extends BaseDomain {
 
     public void setDescription(String description) {
         this.description = description;
+    }
+
+    public int getIsFreeze() {
+        return isFreeze;
+    }
+
+    public void setIsFreeze(int isFreeze) {
+        this.isFreeze = isFreeze;
     }
 }

@@ -285,7 +285,7 @@ public class WorkController {
     @RequestMapping(value="/getWorkByUserCode",method=RequestMethod.GET)
     public CommonResponse getWorkByUserCode(@RequestParam("userCode")String userCode){
         CommonResponse response=new CommonResponse("获取成功");
-        List<Work> works= workServer.getObjectByWorkPersons(userCode);
+        List<Work> works= workServer.getPublishWorks();
         List<WorkVo> workVos=new ArrayList<>();
         for (Work work : works){
             WorkSchedule workSchedule=workScheduleServer.getAllByWorkIdAndCreateBy(work.getId(),userCode);

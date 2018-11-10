@@ -15,6 +15,8 @@ import java.util.List;
 public interface WorkService extends JpaRepository<Work,Integer>,JpaSpecificationExecutor<Work> {
     @Query("select w from Work w where w.id=?1")
     Work getById(String id);
-    @Query("select w from Work w where w.status=0")
+    @Query("select w from Work w where w.status=1")
     List<Work> getAllStartWork();
+    @Query("select w from Work w where w.status<>0")
+    List<Work> getPublishWorks();
 }

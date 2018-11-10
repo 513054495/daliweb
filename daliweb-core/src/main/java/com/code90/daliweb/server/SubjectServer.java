@@ -59,4 +59,9 @@ public interface SubjectServer extends BaseServer {
      * @return 最小编号
      */
     int getMaxSubjectByExam();
+    /**
+     * 获取所有高级的非填空题、非问答题
+     * @return 题目
+     */
+    List<Subject> getAllByExam();
 }

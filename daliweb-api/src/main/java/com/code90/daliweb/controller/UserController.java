@@ -134,6 +134,34 @@ public class UserController {
         }
     }
 
+    /**
+     * 修改用户状态
+     * @param ids 用户编号
+     * @param isFreeze 是否冻结
+     * @return 修改结果
+     */
+    @RequestMapping(value="/daliweb/user/editState",method = RequestMethod.GET)
+    public CommonResponse editState(@RequestParam("ids")String ids, @RequestParam("isFreeze")int isFreeze){
+        try {
+            if(!StringUtil.isEmpty(ids)) {
+                String[] id_list = ids.split(",");
+                for (String id : id_list) {
+                    User user= (User) userServer.getObjectById(id);
+                    user.setIsFreeze(isFreeze);
+                    userServer.save(user);
+                }
+                logger.info("用户修改成功");
+                return new CommonResponse("修改成功");
+            }else{
+                logger.error("用户修改失败，编号不能为空");
+                return new CommonResponse("修改失败",2);
+            }
+        }catch (Exception e){
+            logger.error("修改失败，原因："+e.getMessage());
+            return new CommonResponse("修改失败",2,e);
+        }
+    }
+
 
     /**
      * 删除用户
@@ -298,8 +326,7 @@ public class UserController {
             return new CommonResponse("登录失败，帐号或密码不能为空",4);
         }else {
             User user = userServer.getUserByUserCode(req.getUserCode());
-            if (null != user) {
-                System.out.println(MD5Util.getMD5String(req.getDlwPsw()));
+            if (null != user&&user.getIsFreeze()==0) {
                 if (MD5Util.getMD5String(req.getDlwPsw()).equals(user.getDlwPsw())) {
                     if(user.getUserType()!=2&&req.getIsFront()!=1){
                         logger.error("登录失败，非管理员无法登录后台管理");

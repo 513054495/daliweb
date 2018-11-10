@@ -169,18 +169,24 @@ public class QuestionController  {
      */
     @RequestMapping(value="/getQuestions",method=RequestMethod.GET)
     public CommonResponse getQuestions(QuestionSearchReq req){
-        int page=req.getPage()==0?0:req.getPage()-1;
-        int pageSize=req.getPageSize()==0?10:req.getPageSize();
-        List<Question> allQuestion=questionServer.getAll(req);
-        int total=allQuestion.size();
-        int totalPage=total%pageSize==0?total/pageSize:total/pageSize+1;
-        List<Question> learnContents=questionServer.findQuestionCriteria(page,pageSize,req);
-        CommonResponse response= new CommonResponse("获取成功","info",learnContents);
-        response.addNewDate("pageNum",page+1);
-        response.addNewDate("pageSize",pageSize);
-        response.addNewDate("total",total);
-        response.addNewDate("totalPage",totalPage);
-        return response;
+        try{
+            int page=req.getPage()==0?0:req.getPage()-1;
+            int pageSize=req.getPageSize()==0?10:req.getPageSize();
+            List<Question> allQuestion=questionServer.getAll(req);
+            int total=allQuestion.size();
+            int totalPage=total%pageSize==0?total/pageSize:total/pageSize+1;
+            List<Question> learnContents=questionServer.findQuestionCriteria(page,pageSize,req);
+            logger.info("获取成功");
+            CommonResponse response= new CommonResponse("获取成功","info",learnContents);
+            response.addNewDate("pageNum",page+1);
+            response.addNewDate("pageSize",pageSize);
+            response.addNewDate("total",total);
+            response.addNewDate("totalPage",totalPage);
+            return response;
+        }catch (Exception e){
+            logger.info("获取失败，原因："+e.getMessage());
+            return new CommonResponse("获取失败",2,e);
+        }
     }
 
     /**

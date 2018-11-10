@@ -30,11 +30,4 @@ public interface ExamServer extends BaseServer {
      */
     List<Exam> getAll();
 
-    /**
-     * 根据用户帐号获取考试列表
-     * @param userCode 用户帐号
-     * @return 考试列表
-     */
-    List<Exam> getExamByUserCode(String userCode);
-
 }

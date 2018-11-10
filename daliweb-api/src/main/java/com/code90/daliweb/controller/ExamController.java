@@ -183,7 +183,7 @@ public class ExamController {
         try{
            updateState();
            if(StringUtil.isEmpty(id)){
-               List<Exam> exams=examServer.getExamByUserCode(userCode);
+               List<Exam> exams=examServer.getAll();
                List<ExamVo> examVos=new ArrayList<>();
                for (Exam exam :exams){
                    ExamSchedule examSchedule=examScheduleServer.getAllByExanIdAndCreateBy(exam.getId(),userCode);

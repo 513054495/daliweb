@@ -18,12 +18,14 @@ public interface SubjectService extends JpaRepository<Subject,Integer>,JpaSpecif
     Subject getSubjectById(int id);
     @Query("select max(s.id) from Subject s")
     int getMaxSubject();
-    @Query("select s from Subject s where  s.type<>3 and s.type<>4")
+    @Query("select s from Subject s where  s.type<>3 and s.type<>4 and s.subjectType=1")
     List<Subject> getAllByAnwser();
-    @Query("select min(s.id) from Subject s where  s.type<>3 and s.type<>4")
+    @Query("select min(s.id) from Subject s where  s.type<>3 and s.type<>4 and s.subjectType=1")
     int getMixSubjectBynswer();
     @Query("select s from Subject s where  s.type<>3 and s.type<>4 and s.subjectType=0")
     List<Subject> getAllByRandom();
-    @Query("select max(s.id) from Subject s where  s.type<>3 and s.type<>4")
+    @Query("select max(s.id) from Subject s where  s.type<>3 and s.type<>4 and s.subjectType=2")
     int getMaxSubjectByExam();
+    @Query("select s from Subject s where  s.type<>3 and s.type<>4 and s.subjectType=2")
+    List<Subject> getAllByExam();
 }

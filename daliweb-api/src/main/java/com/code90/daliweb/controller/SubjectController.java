@@ -238,7 +238,7 @@ public class SubjectController {
                 response.addNewDate("info", subject);
                 response.addNewDate("totalNum", subjects.size());
             }else if(subjectType==2){
-                subjects=subjectServer.getAllByAnwser();
+                subjects=subjectServer.getAllByExam();
                 int count= subjects.size()>100?100:subjects.size();
                 List<Subject> allExamSubjects=new ArrayList<>();
                 for(int i=0;i<count;i++){
@@ -296,7 +296,7 @@ public class SubjectController {
         while(flag){
             int count=allExamSubjects.size();
             Subject subject= (Subject) subjectServer.getObjectById(currentId+"");
-            if(null!=subject && subject.getType()!=3 &&subject.getType()!=4){
+            if(null!=subject && subject.getType()!=3 &&subject.getType()!=4 && subject.getSubjectType()==2){
                 subject.setAnswer("");
                 subject.setAnswerAnalysis("");
                 if(count==0){

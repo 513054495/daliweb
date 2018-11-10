@@ -31,9 +31,8 @@ public interface WorkServer  extends BaseServer{
     List<Work> findWorkCriteria(int page, int pageSize, WorkSearchReq req);
 
     /**
-     * 根据用户帐号获取全部作业
-     * @param userCode 用户帐号
+     * 根据获取全部发布作业
      * @return 作业列表
      */
-    List<Work> getObjectByWorkPersons(String userCode);
+    List<Work> getPublishWorks();
 }
