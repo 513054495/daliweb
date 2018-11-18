@@ -4,7 +4,6 @@ import com.code90.daliweb.domain.Orders;
 import com.code90.daliweb.request.shop.OrderSearchReq;
 
 import java.util.List;
-import java.util.Map;
 
 /**
  * 订单服务接口
@@ -34,5 +33,18 @@ public interface OrdersServer extends BaseServer {
      * @return 订单列表
      */
     List<Orders> getOrdersByCreateBy(String userCode);
+
+    /**
+     * 根据订单状态获取订单数量
+     * @param i
+     * @return 订单数量
+     */
+    int getOrdersByStatus(int i);
+
+    /**
+     * 获取每月的销售额
+     * @return 每月销售额
+     */
+    List<Object[]> getSalesByYear();
 
 }

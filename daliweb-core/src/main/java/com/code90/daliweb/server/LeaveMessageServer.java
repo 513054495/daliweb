@@ -30,4 +30,11 @@ public interface LeaveMessageServer extends BaseServer {
      * @return
      */
     List<LeaveMessage> getLeaveMessageByUserCode(String userCode);
+
+    /**
+     * 根据留言状态获取留言数量
+     * @param i
+     * @return 留言数量
+     */
+    int getLeaveMessageByState(int i);
 }

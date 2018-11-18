@@ -9,28 +9,23 @@ import com.aliyuncs.http.MethodType;
 import com.aliyuncs.profile.DefaultProfile;
 import com.aliyuncs.profile.IClientProfile;
 import com.code90.daliweb.conf.RedisServer;
-import com.code90.daliweb.domain.Recommend;
-import com.code90.daliweb.domain.User;
-import com.code90.daliweb.request.CommonRequest;
+import com.code90.daliweb.domain.*;
 import com.code90.daliweb.request.user.*;
 import com.code90.daliweb.response.CommonResponse;
 import com.code90.daliweb.server.UserServer;
-import com.code90.daliweb.utils.DateUtils;
-import com.code90.daliweb.utils.IdUtils;
-import com.code90.daliweb.utils.MD5Util;
-import com.code90.daliweb.utils.StringUtil;
+import com.code90.daliweb.utils.*;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletResponse;
 import java.io.*;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Random;
@@ -62,6 +57,18 @@ public class UserController {
             user.setDlwPsw(MD5Util.getMD5String(req.getDlwPsw()));
             user.setShareCode(IdUtils.createShareCode());
             userServer.save(user);
+            if(user.getUserType()==1){
+                saveChangeLog(0,user.getUserCode());
+            }
+            if(user.getIsClassMember()==1){
+                saveChangeLog(6,user.getUserCode());
+            }
+            if(user.getTeamLevel()!=0){
+                saveChangeLog(user.getTeamLevel(),user.getUserCode());
+            }
+            if(user.getCollegeLevel()!=0){
+                saveChangeLog(user.getCollegeLevel()+6,user.getUserCode());
+            }
             logger.info("保存成功");
             return new CommonResponse("保存成功");
         }catch (Exception e){
@@ -81,12 +88,31 @@ public class UserController {
             User user=(User)userServer.getObjectById(req.getId());
             BeanUtils.copyProperties(req,user);
             userServer.save(user);
+            if(user.getUserType()==1){
+                saveChangeLog(0,user.getUserCode());
+            }
+            if(user.getIsClassMember()==1){
+                saveChangeLog(6,user.getUserCode());
+            }
+            if(user.getTeamLevel()!=0){
+                saveChangeLog(user.getTeamLevel(),user.getUserCode());
+            }
+            if(user.getCollegeLevel()!=0){
+                saveChangeLog(user.getCollegeLevel()+6,user.getUserCode());
+            }
             logger.info("用户修改成功");
             return new CommonResponse("修改成功");
         }catch (Exception e){
             logger.error("修改失败，原因："+e.getMessage());
             return new CommonResponse("修改失败",2,e);
         }
+    }
+
+    private void saveChangeLog(int type,String createBy){
+        UserChangeLog userChangeLog=new UserChangeLog();
+        userChangeLog.setType(type);
+        userChangeLog.createBy=createBy;
+        userServer.saveUserChangeLog(userChangeLog);
     }
 
     /**
@@ -275,6 +301,105 @@ public class UserController {
     }
 
     /**
+     * 分页查询用户更改记录
+     * @param req 分页条件
+     * @return 用户更改记录列表
+     */
+    @RequestMapping(value="/daliweb/user/getUserChangeLogs",method=RequestMethod.GET)
+    public CommonResponse getUserChangeLogs(UserChangeLogReq req){
+        int page=req.getPage()==0?0:req.getPage()-1;
+        int pageSize=req.getPageSize()==0?10:req.getPageSize();
+        List<UserChangeLog> allUserChangeLog=userServer.getAllChangeLog(req);
+        int total=allUserChangeLog.size();
+        int totalPage=total%pageSize==0?total/pageSize:total/pageSize+1;
+        List<UserChangeLog> userChangeLogs=userServer.findUserChangeLogCriteria(page,pageSize,req);
+        CommonResponse response= new CommonResponse("获取成功","info",userChangeLogs);
+        response.addNewDate("pageNum",page+1);
+        response.addNewDate("pageSize",pageSize);
+        response.addNewDate("total",total);
+        response.addNewDate("totalPage",totalPage);
+        return response;
+    }
+
+    /**
+     * 分页查询用户更改记录
+     * @param req 分页条件
+     * @return 用户更改记录列表
+     */
+    @RequestMapping(value="/daliweb/user/exportUserChangeLogs",method=RequestMethod.GET)
+    public void exportUserChangeLogs(HttpServletResponse response, UserChangeLogReq req) throws Exception {
+        List<ExcelData> excelDatas = new ArrayList<>();
+        ExcelData ordersExcel = new ExcelData();
+        ordersExcel.setName("用户晋升记录数据");
+        List<String> titles = new ArrayList();
+        titles.add("用户帐号");
+        titles.add("晋升类型");
+        titles.add("晋升时间");
+        ordersExcel.setTitles(titles);
+        //添加列
+        List<List<Object>> rows = new ArrayList();
+        List<Object> row = null;
+        List<UserChangeLog> allUserChangeLogs=userServer.getAllChangeLog(req);
+        for (int i = 0; i < allUserChangeLogs.size(); i++) {
+            row = new ArrayList();
+            row.add(allUserChangeLogs.get(i).createBy);
+            row.add(changeName(allUserChangeLogs.get(i).getType()));
+            row.add(DateUtils.dateToDateString(allUserChangeLogs.get(i).createTime, DateUtils.ZHCN_DATATIMEF_STR));
+            rows.add(row);
+        }
+        ordersExcel.setRows(rows);
+        excelDatas.add(ordersExcel);
+        String fileName="用户晋升记录数据" + DateUtils.dateToDateString(new Date(), DateUtils.ZHCN_DATATIMEF_STR) + ".xls";
+        ExcelUtils.exportExcel(response, fileName, excelDatas);
+    }
+
+    private String changeName(int type){
+        String str="";
+        switch(type){
+            case 0:
+                str="学习用户";
+                break;
+            case 1:
+                str="一星团员";
+                break;
+            case 2:
+                str="二星团员";
+                break;
+            case 3:
+                str="三星团员";
+                break;
+            case 4:
+                str="四星团员";
+                break;
+            case 5:
+                str="五星团员";
+                break;
+            case 6:
+                str="汉学堂用户";
+                break;
+            case 7:
+                str="三级学士";
+                break;
+            case 8:
+                str="二级学士";
+                break;
+            case 9:
+                str="一级学士";
+                break;
+            case 10:
+                str="三级院士";
+                break;
+            case 11:
+                str="二级院士";
+                break;
+            case 12:
+                str="一级院士";
+                break;
+        }
+        return str;
+    }
+
+    /**
      * 注册
      * @param req 注册信息
      * @return 注册结果
@@ -291,8 +416,8 @@ public class UserController {
             BeanUtils.copyProperties(req,user);
             user.setDlwPsw(MD5Util.getMD5String(req.getDlwPsw()));
             user.setShareCode(IdUtils.createShareCode());
-            user.setUserName("达理网用户");
-            user.setNickname("达理网用户");
+            user.setUserName("达礼网用户");
+            user.setNickname("达礼网用户");
             user.setPhone(req.getUserCode());
             User recommendUser=userServer.getUserByShareCode(req.getShareCode());
             if(null!=recommendUser){
@@ -428,7 +553,7 @@ public class UserController {
      * @throws ClientException
      */
     @RequestMapping(value = "daliweb/user/sendMessage",method = RequestMethod.GET)
-    public CommonResponse sendMessage(@RequestParam("phone") String phone) throws ClientException {
+    public CommonResponse sendMessage(@RequestParam("phone") String phone,int type) throws ClientException {
         //设置超时时间-可自行调整
         System.setProperty("sun.net.client.defaultConnectTimeout", "10000");
         System.setProperty("sun.net.client.defaultReadTimeout", "10000");
@@ -451,12 +576,20 @@ public class UserController {
         //必填:短信签名-可在短信控制台中找到
         request.setSignName("达礼网");
         //必填:短信模板-可在短信控制台中找到，发送国际/港澳台消息时，请使用国际/港澳台短信模版
-        request.setTemplateCode("SMS_150174052");
+        if(type==0) {
+            request.setTemplateCode("SMS_150174052");
+        }else{
+            request.setTemplateCode("SMS_151233574");
+        }
         //可选:模板中的变量替换JSON串,如模板内容为"亲爱的${name},您的验证码为${code}"时,此处的值为
         //友情提示:如果JSON中需要带换行符,请参照标准的JSON协议对换行符的要求,比如短信内容中包含\r\n的情况在JSON中需要表示成\\r\\n,否则会导致JSON在服务端解析失败
         //request.setTemplateParam("{\"code\":\"988756\"}");
         String msgCode = getMsgCode();
-        redisServer.setValue("register"+phone,msgCode,10);
+        if(type==0) {
+            redisServer.setValue("register" + phone, msgCode, 10);
+        }else{
+            redisServer.setValue("forgetPsw" + phone, msgCode, 10);
+        }
         request.setTemplateParam("{\"code\":\"" + msgCode + "\"}");
         //请求失败这里会抛ClientException异常
         SendSmsResponse sendSmsResponse = acsClient.getAcsResponse(request);
@@ -468,6 +601,29 @@ public class UserController {
             return new CommonResponse("发送失败",8);
         }
     }
+
+    @RequestMapping(value = "daliweb/user/forgetPsw",method = RequestMethod.POST)
+    public CommonResponse forgetPsw(@RequestBody UserRegisterReq req) throws ClientException {
+        try {
+            String str=redisServer.getValue("forgetPsw"+req.getUserCode());
+            logger.error("------------>>>>>>>>>>>>"+"forgetPsw"+req.getUserCode());
+            logger.error("------------>>>>>>>>>>>>"+str);
+            logger.error("------------>>>>>>>>>>>>"+req.getVerificationCode());
+            if(null==str||!str.equals(req.getVerificationCode())){
+                logger.error("保存失败，原因：验证码不正确");
+                return new CommonResponse("保存失败，原因：验证码不正确",1);
+            }
+            User user=userServer.getUserByUserCode(req.getUserCode());
+            user.setDlwPsw(MD5Util.getMD5String(req.getDlwPsw()));
+            userServer.save(user);
+            logger.info("保存成功");
+            return new CommonResponse("保存成功");
+        }catch (Exception e){
+            logger.error("保存失败，原因："+e.getMessage());
+            return new CommonResponse("保存失败",1,e);
+        }
+    }
+
 
     private String getMsgCode() {
         int n = 6;

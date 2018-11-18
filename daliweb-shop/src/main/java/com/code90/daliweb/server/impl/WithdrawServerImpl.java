@@ -59,6 +59,18 @@ public class WithdrawServerImpl implements WithdrawServer {
                 if(req.getStatus()!=-1){
                     list.add(criteriaBuilder.equal(root.get("status").as(Integer.class), req.getStatus()));
                 }
+                if(req.getMinMoney()!=-1){
+                    list.add(criteriaBuilder.greaterThanOrEqualTo(root.get("money").as(Integer.class), req.getMinMoney()));
+                }
+                if(req.getMaxMoney()!=-1){
+                    list.add(criteriaBuilder.lessThan(root.get("money").as(Integer.class), req.getMaxMoney()));
+                }
+                if(!StringUtil.isEmpty(req.getStartTime())){
+                    list.add(criteriaBuilder.greaterThanOrEqualTo(root.get("createTime").as(String.class), req.getStartTime()));
+                }
+                if(!StringUtil.isEmpty(req.getEndTime())){
+                    list.add(criteriaBuilder.lessThanOrEqualTo(root.get("createTime").as(String.class), req.getEndTime()));
+                }
                 Predicate[] p = new Predicate[list.size()];
                 return criteriaBuilder.and(list.toArray(p));
             }
@@ -80,6 +92,18 @@ public class WithdrawServerImpl implements WithdrawServer {
                 if(req.getStatus()!=-1){
                     list.add(criteriaBuilder.equal(root.get("status").as(Integer.class), req.getStatus()));
                 }
+                if(req.getMinMoney()!=-1){
+                    list.add(criteriaBuilder.greaterThanOrEqualTo(root.get("money").as(Integer.class), req.getMinMoney()));
+                }
+                if(req.getMaxMoney()!=-1){
+                    list.add(criteriaBuilder.lessThan(root.get("money").as(Integer.class), req.getMaxMoney()));
+                }
+                if(!StringUtil.isEmpty(req.getStartTime())){
+                    list.add(criteriaBuilder.greaterThanOrEqualTo(root.get("createTime").as(String.class), req.getStartTime()));
+                }
+                if(!StringUtil.isEmpty(req.getEndTime())){
+                    list.add(criteriaBuilder.lessThanOrEqualTo(root.get("createTime").as(String.class), req.getEndTime()));
+                }
                 Predicate[] p = new Predicate[list.size()];
                 return criteriaBuilder.and(list.toArray(p));
             }
@@ -96,5 +120,26 @@ public class WithdrawServerImpl implements WithdrawServer {
     @Override
     public double getAllMoneyByUserCode(String userCode) {
         return withdrawService.getAllMoneyByUserCode(userCode);
+    }
+
+    @Override
+    public int getWithdrawByStatus(int i) {
+        return withdrawService.getWithdrawByStatus(i);
+    }
+
+    @Override
+    public double getAllMoney() {
+        return withdrawService.getAllMoney();
+    }
+
+    @Override
+    public List<Object[]> getWithdrawByYear(int status) {
+        List<Object[]> withdraws=null;
+        if(status==0){
+            withdraws = withdrawService.getWithdrawByMonth();
+        }else {
+            withdraws = withdrawService.getWithdrawByMonth(status);
+        }
+        return withdraws;
     }
 }

@@ -3,6 +3,7 @@ package com.code90.daliweb.controller;
 import com.code90.daliweb.domain.*;
 import com.code90.daliweb.request.learn.*;
 import com.code90.daliweb.response.CommonResponse;
+import com.code90.daliweb.server.AnnouncementServer;
 import com.code90.daliweb.server.ExamScheduleServer;
 import com.code90.daliweb.server.ExamServer;
 import com.code90.daliweb.server.UserServer;
@@ -35,6 +36,8 @@ public class ExamController {
     private ExamScheduleServer examScheduleServer;
     @Autowired
     private UserServer userServer;
+    @Autowired
+    private AnnouncementServer announcementServer;
 
     /**
      * 新增考试
@@ -127,6 +130,34 @@ public class ExamController {
     }
 
     /**
+     * 修改考试状态
+     * @param  ids 考试编号
+     * @param  status 状态
+     * @return 修改结果
+     */
+    @RequestMapping(value="/editState",method = RequestMethod.GET)
+    public CommonResponse editState(@RequestParam("ids")String ids,@RequestParam("status")int status){
+        try {
+            if(!StringUtil.isEmpty(ids)) {
+                String[] id_list = ids.split(",");
+                for (String id : id_list) {
+                    Exam exam = (Exam) examServer.getObjectById(id);
+                    exam.setStatus(status);
+                    examServer.save(exam);
+                }
+                logger.info("考试修改成功");
+                return new CommonResponse("修改成功");
+            }else{
+                logger.error("考试修改失败，编号不能为空");
+                return new CommonResponse("修改失败",2);
+            }
+        }catch (Exception e){
+            logger.error("修改失败，原因："+e.getMessage());
+            return new CommonResponse("修改失败",2,e);
+        }
+    }
+
+    /**
      * 根据编号获取考试
      * @param id 编号
      * @return 考试
@@ -191,6 +222,7 @@ public class ExamController {
                    BeanUtils.copyProperties(exam,examVo);
                    if(null!=examSchedule){
                        examVo.setIsExam(1);
+                       examVo.setPoint(examSchedule.getPoint());
                    }
                    examVos.add(examVo);
                }
@@ -379,10 +411,14 @@ public class ExamController {
     private void updateState(){
         List<Exam> examList=examServer.getAll();
         for (Exam exam : examList){
-            if(new Date().after(exam.getStartTime())){
+            if(new Date().after(exam.getStartTime())&&exam.getStatus()==0){
                 exam.setStatus(1);
-            }else{
-                exam.setStatus(0);
+                Announcement announcement=new Announcement();
+                announcement.setTitle("\""+exam.getTitle()+"\"考试通知");
+                announcement.setContent("管理员发布了\""+exam.getTitle()+"\"的考试，请您尽快到学习-->考试板块完成考试！");
+                announcement.setLevel("2,3");
+                announcement.setStatus(1);
+                announcementServer.save(announcement);
             }
             if(new Date().after(exam.getEndTime())){
                 exam.setStatus(2);

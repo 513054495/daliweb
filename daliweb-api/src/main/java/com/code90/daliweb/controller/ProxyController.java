@@ -1,11 +1,11 @@
 package com.code90.daliweb.controller;
 
 import com.code90.daliweb.domain.*;
-import com.code90.daliweb.request.shop.OrderSearchReq;
-import com.code90.daliweb.request.shop.ProxySaveReq;
-import com.code90.daliweb.request.shop.ProxySearchReq;
+import com.code90.daliweb.request.shop.*;
 import com.code90.daliweb.response.CommonResponse;
 import com.code90.daliweb.server.*;
+import com.code90.daliweb.utils.DateUtils;
+import com.code90.daliweb.utils.ExcelUtils;
 import com.code90.daliweb.utils.StringUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -13,8 +13,10 @@ import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
+import javax.servlet.http.HttpServletResponse;
 import java.text.NumberFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 /**
@@ -216,6 +218,121 @@ public class ProxyController {
         response.addNewDate("totalCount",proxyVos.size());
         response.addNewDate("info",proxyVos);
         return response;
+    }
+
+    /**
+     * 分页查询代理
+     * @param req 分页条件
+     * @return 商品列表
+     */
+    @RequestMapping(value="/getProxyDetailSummary",method=RequestMethod.GET)
+    public CommonResponse getProxyDetailSummary(ProxyDetailSearchReq req){
+        CommonResponse response= new CommonResponse("获取成功");
+        NumberFormat nf=NumberFormat.getNumberInstance() ;
+        nf.setMaximumFractionDigits(2);
+        int page=req.getPage()==0?0:req.getPage()-1;
+        int pageSize=req.getPageSize()==0?10:req.getPageSize();
+        List<ProxyDetail> allProxyDetail=proxyServer.getAllDetail(req);
+        double currentProxyMoney=0;
+        double currentPayMoney=0;
+        double currentTotalMoney=0;
+        for(ProxyDetail proxyDetail : allProxyDetail){
+            currentProxyMoney+=proxyDetail.getMoney();
+            List<OrderDetail> orderDetails=orderDetailServer.getOrderDetailByOrderId(proxyDetail.getOrderNo());
+            for(OrderDetail orderDetail : orderDetails){
+                Commodity commodity= (Commodity) commodityServer.getObjectById(orderDetail.getCommodityId());
+                currentTotalMoney+=(commodity.getPrice()*orderDetail.getOrderNum());
+                currentPayMoney+=orderDetail.getMoney();
+            }
+        }
+        response.addNewDate("currentProxyMoney",currentProxyMoney);
+        response.addNewDate("currentPayMoney",currentPayMoney);
+        response.addNewDate("currentTotalMoney",currentTotalMoney);
+        int total=allProxyDetail.size();
+        int totalPage=total%pageSize==0?total/pageSize:total/pageSize+1;
+        List<ProxyDetail> proxyDetails=proxyServer.findProxyDteailCriteria(page,pageSize,req);
+        List<ProxyDetailVo> proxyDetailVos=new ArrayList<>();
+        for(ProxyDetail proxyDetail : proxyDetails){
+            ProxyDetailVo proxyDetailVo=new ProxyDetailVo();
+            BeanUtils.copyProperties(proxyDetail,proxyDetailVo);
+            List<OrderDetail> orderDetails=orderDetailServer.getOrderDetailByOrderId(proxyDetail.getOrderNo());
+            for(OrderDetail orderDetail : orderDetails){
+                Commodity commodity= (Commodity) commodityServer.getObjectById(orderDetail.getCommodityId());
+                proxyDetailVo.setTotalMoney(Double.parseDouble(nf.format(proxyDetailVo.getTotalMoney()+commodity.getPrice()*orderDetail.getOrderNum())));
+                proxyDetailVo.setPayMoney(Double.parseDouble(nf.format(proxyDetailVo.getPayMoney()+orderDetail.getMoney())));
+            }
+            proxyDetailVos.add(proxyDetailVo);
+        }
+        response.addNewDate("info",proxyDetailVos);
+        response.addNewDate("pageNum",page+1);
+        response.addNewDate("pageSize",pageSize);
+        response.addNewDate("total",total);
+        response.addNewDate("totalPage",totalPage);
+        return response;
+    }
+
+    @RequestMapping(value = "/exportProxyDetailSummary", method = RequestMethod.GET)
+    public void exportProxyDetailSummary(HttpServletResponse response, ProxyDetailSearchReq req) throws Exception {
+        NumberFormat nf=NumberFormat.getNumberInstance() ;
+        nf.setMaximumFractionDigits(2);
+        List<ExcelData> excelDatas = new ArrayList<>();
+        ExcelData ordersExcel = new ExcelData();
+        ordersExcel.setName("提成统计数据");
+        List<String> titles = new ArrayList();
+        titles.add("提成计算日期");
+        titles.add("代理人帐号");
+        titles.add("订单号");
+        titles.add("提成类型");
+        titles.add("订单金额");
+        titles.add("成交金额");
+        titles.add("提成金额");
+        ordersExcel.setTitles(titles);
+        //添加列
+        List<List<Object>> rows = new ArrayList();
+        List<Object> row = null;
+        List<ProxyDetailVo> proxyDetailVos = new ArrayList<>();
+        List<ProxyDetail> allProxyDetail=proxyServer.getAllDetail(req);
+        double currentProxyMoney=0;
+        double currentPayMoney=0;
+        double currentTotalMoney=0;
+        for(ProxyDetail proxyDetail : allProxyDetail){
+            currentProxyMoney+=proxyDetail.getMoney();
+            ProxyDetailVo proxyDetailVo=new ProxyDetailVo();
+            BeanUtils.copyProperties(proxyDetail,proxyDetailVo);
+            List<OrderDetail> orderDetails=orderDetailServer.getOrderDetailByOrderId(proxyDetail.getOrderNo());
+            for(OrderDetail orderDetail : orderDetails){
+                Commodity commodity= (Commodity) commodityServer.getObjectById(orderDetail.getCommodityId());
+                proxyDetailVo.setTotalMoney(Double.parseDouble(nf.format(proxyDetailVo.getTotalMoney()+commodity.getPrice()*orderDetail.getOrderNum())));
+                currentTotalMoney+=(commodity.getPrice()*orderDetail.getOrderNum());
+                proxyDetailVo.setPayMoney(Double.parseDouble(nf.format(proxyDetailVo.getPayMoney()+orderDetail.getMoney())));
+                currentPayMoney+=orderDetail.getMoney();
+            }
+            proxyDetailVos.add(proxyDetailVo);
+        }
+        for (int i = 0; i < proxyDetailVos.size(); i++) {
+            row = new ArrayList();
+            row.add(DateUtils.dateToDateString(proxyDetailVos.get(i).createTime,DateUtils.ZHCN_DATATIMEF_STR));
+            row.add(proxyDetailVos.get(i).createBy);
+            row.add(proxyDetailVos.get(i).getOrderNo());
+            row.add(proxyDetailVos.get(i).getType()==0?"推广提成":"地区提成");
+            row.add(proxyDetailVos.get(i).getTotalMoney());
+            row.add(proxyDetailVos.get(i).getPayMoney());
+            row.add(proxyDetailVos.get(i).getMoney());
+            rows.add(row);
+        }
+        row=new ArrayList<>();
+        row.add("总计：");
+        row.add("");
+        row.add("");
+        row.add("");
+        row.add(nf.format(currentTotalMoney));
+        row.add(nf.format(currentPayMoney));
+        row.add(nf.format(currentProxyMoney));
+        rows.add(row);
+        ordersExcel.setRows(rows);
+        excelDatas.add(ordersExcel);
+        String fileName = "提成统计数据" + DateUtils.dateToDateString(new Date(), DateUtils.ZHCN_DATATIMEF_STR) + ".xls";
+        ExcelUtils.exportExcel(response, fileName, excelDatas);
     }
 
 }

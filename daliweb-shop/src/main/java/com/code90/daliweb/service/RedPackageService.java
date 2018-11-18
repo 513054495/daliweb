@@ -21,4 +21,6 @@ public interface RedPackageService extends JpaRepository<RedPackageDetail,Intege
     List<RedPackageDetail> getAllByUserCode(String userCode);
     @Query("select r from RedPackageDetail r where r.createBy=?1 and r.shareCode=?2 order by r.createTime desc")
     RedPackageDetail getRedPackageDetail(String userCode, String shareCode);
+    @Query("select coalesce(sum(r.money),0) from RedPackageDetail r")
+    int getAllRedPackage();
 }

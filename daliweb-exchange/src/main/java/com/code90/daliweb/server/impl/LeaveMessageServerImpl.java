@@ -104,4 +104,9 @@ public class LeaveMessageServerImpl implements LeaveMessageServer {
     public List<LeaveMessage> getLeaveMessageByUserCode(String userCode) {
         return leaveMessageService.getLeaveMessageByUserCode(userCode);
     }
+
+    @Override
+    public int getLeaveMessageByState(int i) {
+        return leaveMessageService.getLeaveMessageByState(i);
+    }
 }

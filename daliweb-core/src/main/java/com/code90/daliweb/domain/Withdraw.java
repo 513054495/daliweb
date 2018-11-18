@@ -30,7 +30,7 @@ public class Withdraw extends BaseDomain {
     //实际支付
     @Column
     private double payMoney;
-    //状态
+    //状态(0.待审核 1.已通过 2.已拒绝)
     @Column
     private int status;
     //审核描述

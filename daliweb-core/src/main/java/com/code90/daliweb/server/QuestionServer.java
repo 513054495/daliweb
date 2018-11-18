@@ -26,4 +26,11 @@ public interface QuestionServer extends BaseServer {
      * @return 问题列表
      */
     List<Question> findQuestionCriteria(int page, int pageSize, QuestionSearchReq req);
+
+    /**
+     * 根据问题状态获取问题数量
+     * @param i
+     * @return 问题数量
+     */
+    int getQuestionByStatus(int i);
 }

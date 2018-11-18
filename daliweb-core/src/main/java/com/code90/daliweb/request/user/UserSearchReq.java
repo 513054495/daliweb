@@ -25,6 +25,7 @@ public class UserSearchReq extends CommonRequest implements Serializable {
     private String area;
     private int page;
     private int pageSize;
+    private String userCode;
 
     public String getUserName() {
         return userName;
@@ -128,5 +129,13 @@ public class UserSearchReq extends CommonRequest implements Serializable {
 
     public void setArea(String area) {
         this.area = area;
+    }
+
+    public String getUserCode() {
+        return userCode;
+    }
+
+    public void setUserCode(String userCode) {
+        this.userCode = userCode;
     }
 }

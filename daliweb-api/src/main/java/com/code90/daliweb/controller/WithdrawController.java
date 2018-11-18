@@ -244,5 +244,113 @@ public class WithdrawController {
         String fileName = "提现订单信息" + DateUtils.dateToDateString(new Date(), DateUtils.ZHCN_DATATIMEF_STR) + ".xls";
         ExcelUtils.exportExcel(response, fileName, excelDatas);
     }
+
+    /**
+     * 获取提成统计
+     * @param req 分页条件
+     * @return 提成统计
+     */
+    @RequestMapping(value="/getWithdrawSummary",method=RequestMethod.GET)
+    public CommonResponse getWithdrawSummary(WithdrawSearchReq req){
+        CommonResponse response= new CommonResponse("获取成功");
+        int page=req.getPage()==0?0:req.getPage()-1;
+        int pageSize=req.getPageSize()==0?10:req.getPageSize();
+        List<Withdraw> allWithdraws=withdrawServer.getAll(req);
+        double totalMoney=0.0;
+        double totalFee=0.0;
+        double toatlTax=0.0;
+        double totalPayMoney=0.0;
+        for(Withdraw withdraw: allWithdraws){
+            totalMoney+=withdraw.getMoney();
+            totalFee+=withdraw.getFeeMoney();
+            toatlTax+=withdraw.getTaxMoney();
+            totalPayMoney+=withdraw.getPayMoney();
+        }
+        int total=allWithdraws.size();
+        int totalPage=total%pageSize==0?total/pageSize:total/pageSize+1;
+        response.addNewDate("total",total);
+        response.addNewDate("totalPage",totalPage);
+        NumberFormat nf=NumberFormat.getNumberInstance() ;
+        nf.setMaximumFractionDigits(2);
+        response.addNewDate("totalMoney",nf.format(totalMoney));
+        response.addNewDate("totalFee",nf.format(totalFee));
+        response.addNewDate("toatlTax",nf.format(toatlTax));
+        response.addNewDate("totalPayMoney",nf.format(totalPayMoney));
+        List<Withdraw> withdraws=withdrawServer.findWithdrawCriteria(page,pageSize,req);
+        List<WithdrawVo> withdrawVos=new ArrayList<>();
+        for (Withdraw withdraw : withdraws){
+            WithdrawVo withdrawVo=new WithdrawVo();
+            BeanUtils.copyProperties(withdraw,withdrawVo);
+            User user=userServer.getUserByUserCode(withdraw.createBy);
+            if(null!=user) {
+                withdrawVo.setUserName(user.getUserName());
+            }
+            withdrawVos.add(withdrawVo);
+        }
+        response.addNewDate("info",withdrawVos);
+        response.addNewDate("pageNum",page+1);
+        response.addNewDate("pageSize",pageSize);
+        return response;
+    }
+
+    @RequestMapping(value = "/exportWithdrawSummary", method = RequestMethod.GET)
+    public void exportWithdraw(HttpServletResponse response, WithdrawSearchReq req) throws Exception {
+        List<ExcelData> excelDatas = new ArrayList<>();
+        ExcelData ordersExcel = new ExcelData();
+        ordersExcel.setName("提现统计数据");
+        List<String> titles = new ArrayList();
+        titles.add("申请人姓名");
+        titles.add("提现金额");
+        titles.add("提现手续费");
+        titles.add("提现代扣税");
+        titles.add("实际提取金额");
+        titles.add("申请时间");
+        ordersExcel.setTitles(titles);
+        //添加列
+        List<List<Object>> rows = new ArrayList();
+        List<Object> row = null;
+        List<WithdrawVo> withdrawVos = new ArrayList<>();
+        List<Withdraw> allWithdraws=withdrawServer.getAll(req);
+        double totalMoney=0.0;
+        double totalFee=0.0;
+        double toatlTax=0.0;
+        double totalPayMoney=0.0;
+        for(Withdraw withdraw:allWithdraws){
+            WithdrawVo withdrawVo = new WithdrawVo();
+            BeanUtils.copyProperties(withdraw, withdrawVo);
+            User user=userServer.getUserByUserCode(withdraw.createBy);
+            if(null!=user) {
+                withdrawVo.setUserName(user.getUserName());
+            }
+            withdrawVos.add(withdrawVo);
+            totalMoney+=withdraw.getMoney();
+            totalFee+=withdraw.getFeeMoney();
+            toatlTax+=withdraw.getTaxMoney();
+            totalPayMoney+=withdraw.getPayMoney();
+        }
+        for (int i = 0; i < withdrawVos.size(); i++) {
+            row = new ArrayList();
+            row.add(withdrawVos.get(i).getUserName());
+            row.add(withdrawVos.get(i).getMoney());
+            row.add(withdrawVos.get(i).getFeeMoney());
+            row.add(withdrawVos.get(i).getTaxMoney());
+            row.add(withdrawVos.get(i).getPayMoney());
+            row.add(DateUtils.dateToDateString(withdrawVos.get(i).createTime,DateUtils.ZHCN_DATATIMEF_STR));
+            rows.add(row);
+        }
+        row=new ArrayList<>();
+        row.add("总计：");
+        NumberFormat nf=NumberFormat.getNumberInstance() ;
+        nf.setMaximumFractionDigits(2);
+        row.add(nf.format(totalMoney));
+        row.add(nf.format(totalFee));
+        row.add(nf.format(toatlTax));
+        row.add(nf.format(totalPayMoney));
+        rows.add(row);
+        ordersExcel.setRows(rows);
+        excelDatas.add(ordersExcel);
+        String fileName = "提现统计数据" + DateUtils.dateToDateString(new Date(), DateUtils.ZHCN_DATATIMEF_STR) + ".xls";
+        ExcelUtils.exportExcel(response, fileName, excelDatas);
+    }
 }
 

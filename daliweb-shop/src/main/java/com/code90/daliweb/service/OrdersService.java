@@ -17,4 +17,8 @@ public interface OrdersService extends JpaRepository<Orders,Integer>,JpaSpecific
     Orders getOrdersById(String id);
     @Query("select o from Orders o where o.createBy=?1 ")
     List<Orders> getOrdersByCreateBy(String userCode);
+    @Query("select coalesce(count(o),0) from Orders o where o.status=?1 ")
+    int getOrdersByStatus(int i);
+    @Query("select substring(o.createTime,1,7),coalesce(sum(o.totalMoney),0) from Orders o where o.status=3 or o.status=5 group by substring(o.createTime,1,7)")
+    List<Object[]> getSalesByMonth();
 }

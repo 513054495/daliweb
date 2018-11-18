@@ -47,4 +47,11 @@ public interface CompetitionDetailServer extends BaseServer {
      * @return 竞赛记录
      */
     List<CompetitionDetail> getCompetitionDetailByUserCode(String userCode);
+
+    /**
+     * 根据详情状态获取详情数量
+     * @param i
+     * @return 详情数量
+     */
+    int getDetailByStatus(int i);
 }

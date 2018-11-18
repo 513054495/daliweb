@@ -19,6 +19,7 @@ public class ExamVo extends BaseDomain {
     private int type;
     private int status;
     private int isExam;
+    private int point;
 
     public String getId() {
         return id;
@@ -90,5 +91,13 @@ public class ExamVo extends BaseDomain {
 
     public void setIsExam(int isExam) {
         this.isExam = isExam;
+    }
+
+    public int getPoint() {
+        return point;
+    }
+
+    public void setPoint(int point) {
+        this.point = point;
     }
 }

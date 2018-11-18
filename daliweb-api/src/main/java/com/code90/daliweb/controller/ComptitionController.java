@@ -136,6 +136,15 @@ public class ComptitionController {
                     }
                     competition.setStatus(status);
                     competitionServer.save(competition);
+                    if(status==3){
+                        List<CompetitionDetail> competitionDetails=competitionDetailServer.getDetailByCompetitionId(competition.getId());
+                        for(CompetitionDetail competitionDetail :competitionDetails){
+                            if(competitionDetail.getStatus()==0){
+                                competitionDetail.setStatus(2);
+                                competitionDetailServer.save(competitionDetail);
+                            }
+                        }
+                    }
                 }
                 logger.info("竞赛修改成功");
                 return new CommonResponse("修改成功");
@@ -183,7 +192,7 @@ public class ComptitionController {
      * @return 考级申请
      */
     @RequestMapping(value="/getCompetitionById",method=RequestMethod.GET)
-    public CommonResponse getCompetitionById(@RequestParam("id")String id){
+    public CommonResponse getCompetitionById(@RequestParam("id")String id,String userCode){
         CommonResponse response=new CommonResponse("获取成功");
         Competition competition=(Competition) competitionServer.getObjectById(id);
         CompetitionVo competitionVo=new CompetitionVo();
@@ -191,6 +200,13 @@ public class ComptitionController {
         TypeList typeList=typeListServer.getTypeNameBySubjectId(competition.getType());
         if(null!=typeList) {
             competitionVo.setTypeName(typeList.getTypeName());
+        }
+        if(!StringUtil.isEmpty(userCode)) {
+            CompetitionDetail competitionDetail = competitionDetailServer.getByCompetitionIdAndUserCode(competitionVo.getId(), userCode);
+            if (null != competitionDetail) {
+                competitionVo.setIsJoin(1);
+                competitionVo.setDetailState(competitionDetail.getStatus());
+            }
         }
         if(competition!=null){
             logger.info("获取成功");
@@ -212,6 +228,8 @@ public class ComptitionController {
         CommonResponse response=new CommonResponse("获取成功");
         CompetitionDetail competitionDetail=(CompetitionDetail) competitionDetailServer.getObjectById(id);
         if(competitionDetail!=null){
+            Competition competition= (Competition) competitionServer.getObjectById(competitionDetail.getCompetitionId());
+            response.addNewDate("competitionStatus",competition.getStatus());
             logger.info("获取成功");
             response.addNewDate("info",competitionDetail);
             return response;
@@ -354,6 +372,10 @@ public class ComptitionController {
         int totalPage=total%pageSize==0?total/pageSize:total/pageSize+1;
         List<CompetitionDetail> competitionDetails=competitionDetailServer.findCompetitionDetailCriteria(page,pageSize,req);
         CommonResponse response= new CommonResponse("获取成功","info",competitionDetails);
+        if(competitionDetails.size()>0){
+            Competition competition= (Competition) competitionServer.getObjectById(competitionDetails.get(0).getCompetitionId());
+            response.addNewDate("competitionStatus",competition.getStatus());
+        }
         response.addNewDate("pageNum",page+1);
         response.addNewDate("pageSize",pageSize);
         response.addNewDate("total",total);

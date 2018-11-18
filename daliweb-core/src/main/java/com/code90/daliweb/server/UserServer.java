@@ -2,6 +2,8 @@ package com.code90.daliweb.server;
 
 import com.code90.daliweb.domain.Recommend;
 import com.code90.daliweb.domain.User;
+import com.code90.daliweb.domain.UserChangeLog;
+import com.code90.daliweb.request.user.UserChangeLogReq;
 import com.code90.daliweb.request.user.UserSearchReq;
 
 import java.util.List;
@@ -77,4 +79,26 @@ public interface UserServer extends BaseServer {
      * @return 全部用户
      */
     List<User> getAll();
+
+    /**
+     * 获取当前月新增用户数
+     * @return 用户数
+     */
+    int getNewUserByCurrentMonth();
+
+    /**
+     * 保存升级记录
+     * @param userChangeLog
+     */
+    void saveUserChangeLog(UserChangeLog userChangeLog);
+
+    /**
+     * 获取当前月新增VIP用户数
+     * @return VIP用户数
+     */
+    int getNewVipUserByCurrentMonth();
+
+    List<UserChangeLog> getAllChangeLog(UserChangeLogReq req);
+
+    List<UserChangeLog> findUserChangeLogCriteria(int page, int pageSize, UserChangeLogReq req);
 }

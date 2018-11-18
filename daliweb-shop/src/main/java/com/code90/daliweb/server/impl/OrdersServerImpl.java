@@ -5,8 +5,6 @@ import com.code90.daliweb.request.shop.OrderSearchReq;
 import com.code90.daliweb.server.OrdersServer;
 import com.code90.daliweb.service.OrdersService;
 import com.code90.daliweb.utils.StringUtil;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -64,11 +62,26 @@ public class OrdersServerImpl implements OrdersServer {
                 if(!StringUtil.isEmpty(req.getArea())){
                     list.add(criteriaBuilder.like(root.get("area").as(String.class), "%"+req.getArea()+"%"));
                 }
-                if(!StringUtil.isEmpty(req.getPayNo())){
-                    list.add(criteriaBuilder.like(root.get("payNo").as(String.class), "%"+req.getPayNo()+"%"));
+                if(!StringUtil.isEmpty(req.getOrderPostalCode())){
+                    list.add(criteriaBuilder.like(root.get("orderPostalCode").as(String.class), "%"+req.getOrderPostalCode()+"%"));
+                }
+                if(req.getPayType()!=-1){
+                    list.add(criteriaBuilder.equal(root.get("payType").as(Integer.class), req.getPayType()));
                 }
                 if(req.getStatus()!=-1){
                     list.add(criteriaBuilder.equal(root.get("status").as(Integer.class), req.getStatus()));
+                }
+                if(!StringUtil.isEmpty(req.getStartTime())){
+                    list.add(criteriaBuilder.greaterThanOrEqualTo(root.get("modifyTime").as(String.class), req.getStartTime()));
+                }
+                if(!StringUtil.isEmpty(req.getEndTime())){
+                    list.add(criteriaBuilder.lessThanOrEqualTo(root.get("modifyTime").as(String.class), req.getEndTime()));
+                }
+                if(req.getMinMoney()!=-1){
+                    list.add(criteriaBuilder.greaterThanOrEqualTo(root.get("totalMoney").as(Integer.class), req.getMinMoney()));
+                }
+                if(req.getMaxMoney()!=-1){
+                    list.add(criteriaBuilder.lessThan(root.get("totalMoney").as(Integer.class), req.getMaxMoney()));
                 }
                 Predicate[] p = new Predicate[list.size()];
                 return criteriaBuilder.and(list.toArray(p));
@@ -94,11 +107,26 @@ public class OrdersServerImpl implements OrdersServer {
                 if(!StringUtil.isEmpty(req.getArea())){
                     list.add(criteriaBuilder.like(root.get("area").as(String.class), "%"+req.getArea()+"%"));
                 }
-                if(!StringUtil.isEmpty(req.getPayNo())){
-                    list.add(criteriaBuilder.like(root.get("payNo").as(String.class), "%"+req.getPayNo()+"%"));
+                if(!StringUtil.isEmpty(req.getOrderPostalCode())){
+                    list.add(criteriaBuilder.like(root.get("orderPostalCode").as(String.class), "%"+req.getOrderPostalCode()+"%"));
+                }
+                if(req.getPayType()!=-1){
+                    list.add(criteriaBuilder.equal(root.get("payType").as(Integer.class), req.getPayType()));
                 }
                 if(req.getStatus()!=-1){
                     list.add(criteriaBuilder.equal(root.get("status").as(Integer.class), req.getStatus()));
+                }
+                if(!StringUtil.isEmpty(req.getStartTime())){
+                    list.add(criteriaBuilder.greaterThanOrEqualTo(root.get("createTime").as(String.class), req.getStartTime()));
+                }
+                if(!StringUtil.isEmpty(req.getEndTime())){
+                    list.add(criteriaBuilder.lessThanOrEqualTo(root.get("createTime").as(String.class), req.getEndTime()));
+                }
+                if(req.getMinMoney()!=-1){
+                    list.add(criteriaBuilder.greaterThanOrEqualTo(root.get("totalMoney").as(Integer.class), req.getMinMoney()));
+                }
+                if(req.getMaxMoney()!=-1){
+                    list.add(criteriaBuilder.lessThan(root.get("totalMoney").as(Integer.class), req.getMaxMoney()));
                 }
                 Predicate[] p = new Predicate[list.size()];
                 return criteriaBuilder.and(list.toArray(p));
@@ -111,5 +139,16 @@ public class OrdersServerImpl implements OrdersServer {
     @Override
     public List<Orders> getOrdersByCreateBy(String userCode) {
         return ordersService.getOrdersByCreateBy(userCode);
+    }
+
+    @Override
+    public int getOrdersByStatus(int i) {
+        return ordersService.getOrdersByStatus(i);
+    }
+
+    @Override
+    public List<Object[]> getSalesByYear() {
+        List<Object[]> sales=ordersService.getSalesByMonth();
+        return sales;
     }
 }

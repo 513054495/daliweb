@@ -454,6 +454,8 @@ public class OrdersController {
      */
     @RequestMapping(value = "/getOrders", method = RequestMethod.GET)
     public CommonResponse getOrders(OrderSearchReq req) {
+        req.setMinMoney(-1);
+        req.setMaxMoney(-1);
         int page = req.getPage() == 0 ? 0 : req.getPage() - 1;
         int pageSize = req.getPageSize() == 0 ? 10 : req.getPageSize();
         List<Orders> allOrders = orderServer.getAll(req);
@@ -569,8 +571,8 @@ public class OrdersController {
         titles.add("支付手续费金额");
         titles.add("支付流水号");
         titles.add("支付日期");
-        titles.add("支付类型(1.微信支付，2.支付宝支付)");
-        titles.add("订单状态(0.待付款，1.已付款，2.待收货，3.已收货，4.退款/退货中，5.已退款，6.交易关闭)");
+        titles.add("支付类型");
+        titles.add("订单状态");
         titles.add("商品信息");
         ordersExcel.setTitles(titles);
         //添加列
@@ -604,7 +606,7 @@ public class OrdersController {
         for (int i = 0; i < ordersVos.size(); i++) {
             row = new ArrayList();
             row.add(ordersVos.get(i).getId());
-            row.add(ordersVos.get(i).createTime);
+            row.add(DateUtils.dateToDateString(ordersVos.get(i).createTime,DateUtils.ZHCN_DATATIMEF_STR));
             row.add(ordersVos.get(i).getReceiver());
             row.add(ordersVos.get(i).getPhone());
             row.add(ordersVos.get(i).getArea());
@@ -614,22 +616,24 @@ public class OrdersController {
             row.add(ordersVos.get(i).getDeductionMonry());
             row.add(ordersVos.get(i).getFeeMoney());
             row.add(ordersVos.get(i).getPayNo());
-            row.add(ordersVos.get(i).getPayTime());
-            row.add(ordersVos.get(i).getPayType());
-            row.add(ordersVos.get(i).getStatus());
+            row.add(DateUtils.dateToDateString(ordersVos.get(i).getPayTime(),DateUtils.ZHCN_DATATIMEF_STR));
+            row.add(changeName(ordersVos.get(i).getPayType(),0));
+            row.add(changeName(ordersVos.get(i).getStatus(),1));
             List<CommodityVo> orderCommodities = ordersVos.get(i).getOrderCommodities();
             String commodityList = "";
             for (int j = 0; j < orderCommodities.size(); j++) {
                 if (j != (orderCommodities.size() - 1)) {
                     commodityList += "商品编号：" + orderCommodities.get(j).getId() + ";商品名称：" + orderCommodities.get(j).getName() +
                                     ";商品数量：" + orderCommodities.get(j).getOrderNum() + ";" +
-                                    ";商品状态：" + orderCommodities.get(j).getStatus() + ";" +
-                                    ";商品规格"+ orderCommodities.get(j).getSpecification()+"\r\n";
+                                    "商品类型：" + changeName(orderCommodities.get(j).getType(),3) + ";" +
+                                    "商品状态：" + changeName(orderCommodities.get(j).getStatus(),2) + ";" +
+                                    "商品规格"+ orderCommodities.get(j).getSpecification()+"\r\n";
                 } else {
                     commodityList += "商品编号：" + orderCommodities.get(j).getId() + ";商品名称：" + orderCommodities.get(j).getName() +
                                      ";商品数量：" + orderCommodities.get(j).getOrderNum() + ";" +
-                                     ";商品状态：" + orderCommodities.get(j).getStatus() + ";"+
-                                     ";商品规格"+ orderCommodities.get(j).getSpecification()+";";
+                                      "商品类型：" + changeName(orderCommodities.get(j).getType(),3) + ";" +
+                                      "商品状态：" + changeName(orderCommodities.get(j).getStatus(),2) + ";"+
+                                      "商品规格:"+ orderCommodities.get(j).getSpecification()+";";
                 }
             }
             row.add(commodityList);
@@ -640,6 +644,261 @@ public class OrdersController {
         String fileName = "用户订单信息" + DateUtils.dateToDateString(new Date(), DateUtils.ZHCN_DATATIMEF_STR) + ".xls";
         ExcelUtils.exportExcel(response, fileName, excelDatas);
     }
+
+
+    /**
+     * 获取退款商品统计
+     * @return 退款商品统计
+     */
+    @RequestMapping(value = "/getCommoditySummary", method = RequestMethod.GET)
+    public CommonResponse getCommoditySummary(CommoditySummaryReq req) {
+        CommonResponse response= new CommonResponse("获取成功");
+        NumberFormat nf=NumberFormat.getNumberInstance() ;
+        nf.setMaximumFractionDigits(2);
+        int page=req.getPage()==0?0:req.getPage()-1;
+        int pageSize=req.getPageSize()==0?10:req.getPageSize();
+        List<OrderDetail> allOrderDetail=orderDetailServer.getAll(req);
+        double totalMoney=0;
+        for(OrderDetail orderDetail : allOrderDetail){
+            totalMoney+=orderDetail.getMoney();
+        }
+        response.addNewDate("totalMoney",nf.format(totalMoney));
+        int total=allOrderDetail.size();
+        int totalPage=total%pageSize==0?total/pageSize:total/pageSize+1;
+        List<OrderDetail> orderDetails=orderDetailServer.findOrderDteailCriteria(page,pageSize,req);
+        List<OrderDetailVo> orderDetailVos=new ArrayList<>();
+        for(OrderDetail orderDetail : orderDetails){
+            OrderDetailVo orderDetailVo=new OrderDetailVo();
+            BeanUtils.copyProperties(orderDetail,orderDetailVo);
+            Commodity commodity= (Commodity) commodityServer.getObjectById(orderDetail.getCommodityId());
+            if(commodity!=null){
+                orderDetailVo.setCommodityName(commodity.getName());
+                orderDetailVo.setCommodityType(commodity.getType());
+            }
+            orderDetailVos.add(orderDetailVo);
+        }
+        response.addNewDate("info",orderDetailVos);
+        response.addNewDate("pageNum",page+1);
+        response.addNewDate("pageSize",pageSize);
+        response.addNewDate("total",total);
+        response.addNewDate("totalPage",totalPage);
+        return response;
+    }
+
+    /**
+     * 导出退款商品统计
+     * @return 退款商品统计
+     */
+    @RequestMapping(value = "/exportCommoditySummary", method = RequestMethod.GET)
+    public void exportCommoditySummary(HttpServletResponse response, CommoditySummaryReq req) throws Exception {
+        NumberFormat nf=NumberFormat.getNumberInstance() ;
+        nf.setMaximumFractionDigits(2);
+        List<ExcelData> excelDatas = new ArrayList<>();
+        ExcelData ordersExcel = new ExcelData();
+        if(req.getStatus()==0) {
+            ordersExcel.setName("商品销售统计数据");
+        }else{
+            ordersExcel.setName("商品退款统计数据");
+        }
+        List<String> titles = new ArrayList();
+        if(req.getStatus()==0) {
+            titles.add("商品销售日期");
+        }else{
+            titles.add("商品退货日期");
+        }
+        titles.add("订单号");
+        titles.add("商品编号");
+        titles.add("商品名称");
+        titles.add("商品类型");
+        titles.add("数量");
+        titles.add("金额");
+        ordersExcel.setTitles(titles);
+        //添加列
+        List<List<Object>> rows = new ArrayList();
+        List<Object> row = null;
+        List<OrderDetailVo> orderDetailVos = new ArrayList<>();
+        List<OrderDetail> allOrderDetail=orderDetailServer.getAll(req);
+        double totalMoney=0;
+        for(OrderDetail orderDetail : allOrderDetail){
+            totalMoney+=orderDetail.getMoney();
+            OrderDetailVo orderDetailVo=new OrderDetailVo();
+            BeanUtils.copyProperties(orderDetail,orderDetailVo);
+            Commodity commodity= (Commodity) commodityServer.getObjectById(orderDetail.getCommodityId());
+            if(commodity!=null){
+                orderDetailVo.setCommodityName(commodity.getName());
+                orderDetailVo.setCommodityType(commodity.getType());
+            }
+            orderDetailVos.add(orderDetailVo);
+        }
+        for (int i = 0; i < orderDetailVos.size(); i++) {
+            row = new ArrayList();
+            if(req.getStatus()==0) {
+                row.add(DateUtils.dateToDateString(orderDetailVos.get(i).createTime, DateUtils.ZHCN_DATATIMEF_STR));
+            }else{
+                row.add(DateUtils.dateToDateString(orderDetailVos.get(i).modifyTime, DateUtils.ZHCN_DATATIMEF_STR));
+            }
+            row.add(orderDetailVos.get(i).getOrderId());
+            row.add(orderDetailVos.get(i).getCommodityId());
+            row.add(orderDetailVos.get(i).getCommodityName());
+            row.add(orderDetailVos.get(i).getCommodityType()==0?"普通商品":"虚拟商品");
+            row.add(orderDetailVos.get(i).getOrderNum());
+            row.add(orderDetailVos.get(i).getMoney());
+            rows.add(row);
+        }
+        row=new ArrayList<>();
+        row.add("总计：");
+        row.add("");
+        row.add("");
+        row.add("");
+        row.add("");
+        row.add("");
+        row.add(nf.format(totalMoney));
+        rows.add(row);
+        ordersExcel.setRows(rows);
+        excelDatas.add(ordersExcel);
+        String fileName="";
+        if(req.getStatus()==0) {
+             fileName = "商品销售统计数据" + DateUtils.dateToDateString(new Date(), DateUtils.ZHCN_DATATIMEF_STR) + ".xls";
+        }else{
+             fileName = "商品退款统计数据" + DateUtils.dateToDateString(new Date(), DateUtils.ZHCN_DATATIMEF_STR) + ".xls";
+        }
+        ExcelUtils.exportExcel(response, fileName, excelDatas);
+    }
+
+
+    /**
+     * 获取订单统计
+     * @return 订单统计
+     */
+    @RequestMapping(value = "/getOrderSummary", method = RequestMethod.GET)
+    public CommonResponse getOrderSummary(OrderSearchReq req) {
+        CommonResponse response= new CommonResponse("获取成功");
+        NumberFormat nf=NumberFormat.getNumberInstance() ;
+        nf.setMaximumFractionDigits(2);
+        int page = req.getPage() == 0 ? 0 : req.getPage() - 1;
+        int pageSize = req.getPageSize() == 0 ? 10 : req.getPageSize();
+        List<Orders> allOrders = orderServer.getAll(req);
+        double payMoney=0;
+        double redPackageMoney=0;
+        for(Orders orders : allOrders){
+            payMoney+=orders.getTotalMoney();
+            redPackageMoney+=orders.getDeductionMonry();
+        }
+        response.addNewDate("payMoney",nf.format(payMoney));
+        response.addNewDate("redPackageMoney",nf.format(redPackageMoney));
+        response.addNewDate("totalMoney",nf.format(payMoney+redPackageMoney));
+        int total = allOrders.size();
+        int totalPage = total % pageSize == 0 ? total / pageSize : total / pageSize + 1;
+        List<Orders> ordersList = orderServer.findOrderCriteria(page, pageSize, req);
+        response.addNewDate("info",ordersList);
+        response.addNewDate("pageNum",page+1);
+        response.addNewDate("pageSize",pageSize);
+        response.addNewDate("total",total);
+        response.addNewDate("totalPage",totalPage);
+        return response;
+    }
+
+    /**
+     * 导出订单统计
+     * @return 订单统计
+     */
+    @RequestMapping(value = "/exportOrderSummary", method = RequestMethod.GET)
+    public void exportOrderSummary(HttpServletResponse response, OrderSearchReq req) throws Exception {
+        NumberFormat nf=NumberFormat.getNumberInstance() ;
+        nf.setMaximumFractionDigits(2);
+        List<ExcelData> excelDatas = new ArrayList<>();
+        ExcelData ordersExcel = new ExcelData();
+        ordersExcel.setName("订单销售统计数据");
+
+        List<String> titles = new ArrayList();
+        titles.add("订单号");
+        titles.add("订单日期");
+        titles.add("订单金额");
+        titles.add("成交金额");
+        titles.add("红包金额");
+        ordersExcel.setTitles(titles);
+        //添加列
+        List<List<Object>> rows = new ArrayList();
+        List<Object> row = null;
+        List<Orders> allOrders=orderServer.getAll(req);
+        double payMoney=0;
+        double redPackageMoney=0;
+        for(Orders orders : allOrders){
+            payMoney+=orders.getTotalMoney();
+            redPackageMoney+=orders.getDeductionMonry();
+        }
+        for (int i = 0; i < allOrders.size(); i++) {
+            row = new ArrayList();
+            row.add(allOrders.get(i).getId());
+            row.add(DateUtils.dateToDateString(allOrders.get(i).createTime, DateUtils.ZHCN_DATATIMEF_STR));
+            row.add(nf.format(allOrders.get(i).getTotalMoney()+allOrders.get(i).getDeductionMonry()));
+            row.add(allOrders.get(i).getTotalMoney());
+            row.add(allOrders.get(i).getDeductionMonry());
+            rows.add(row);
+        }
+        row=new ArrayList<>();
+        row.add("总计：");
+        row.add("");
+        row.add(nf.format(redPackageMoney+payMoney));
+        row.add(nf.format(payMoney));
+        row.add(nf.format(redPackageMoney));
+        rows.add(row);
+        ordersExcel.setRows(rows);
+        excelDatas.add(ordersExcel);
+        String fileName="订单销售统计数据" + DateUtils.dateToDateString(new Date(), DateUtils.ZHCN_DATATIMEF_STR) + ".xls";
+        ExcelUtils.exportExcel(response, fileName, excelDatas);
+    }
+
+
+
+
+    private String changeName(int code, int i) {
+        String str="";
+        switch(i){
+            case 0:
+                if (code == 0) {
+                    str="未支付";
+                } else if (code == 1) {
+                    str="微信支付";
+                } else {
+                    str="支付宝支付";
+                }
+                break;
+            case 1:
+                if(code==0){
+                    str="待付款";
+                }else if(code==1){
+                    str="待发货";
+                }else if(code==2){
+                    str="待收货";
+                }else if(code==3||code==5){
+                    str="交易完成";
+                }else if(code==4||code==6){
+                    str="交易关闭";
+                }
+                break;
+            case 2:
+                if(code==0){
+                    str="正常交易";
+                }else if(code==1){
+                    str="退款中";
+                }else if(code==2){
+                    str="退款成功";
+                }else{
+                    str="退款失败";
+                }
+                break;
+            case 3:
+                if(code==0){
+                    str="普通商品";
+                }else{
+                    str="虚拟商品";
+                }
+        }
+        return str;
+    }
+
+
 
     @RequestMapping(value = "/alipay", method = RequestMethod.GET)
     public CommonResponse alipay(HttpServletResponse httpResponse, @RequestParam("id") String id,String orderType,double money,String aSqzwx) throws IOException {
@@ -723,6 +982,10 @@ public class OrdersController {
                         User user = userServer.getUserByUserCode(orders.createBy);
                         user.setUserType(1);
                         userServer.save(user);
+                        UserChangeLog userChangeLog=new UserChangeLog();
+                        userChangeLog.setType(0);
+                        userChangeLog.createBy=orders.createBy;
+                        userServer.saveUserChangeLog(userChangeLog);
                     }
                 }
                 break;
@@ -927,6 +1190,10 @@ public class OrdersController {
                                 User user = userServer.getUserByUserCode(orders.createBy);
                                 user.setUserType(1);
                                 userServer.save(user);
+                                UserChangeLog userChangeLog=new UserChangeLog();
+                                userChangeLog.setType(0);
+                                userChangeLog.createBy=orders.createBy;
+                                userServer.saveUserChangeLog(userChangeLog);
                             }
                         }
                         break;
@@ -1003,6 +1270,7 @@ public class OrdersController {
             proxyDetail.setBuyUserCode(orders.getCreateBy());
             proxyDetail.setCreateBy(proxy.createBy);
             proxyDetail.setOrderNo(orders.getId());
+            proxyDetail.setOrderPostalCode(orders.getOrderPostalCode());
             proxyDetail.setType(0);
             proxyServer.saveProxyDetail(proxyDetail);
         }
@@ -1013,6 +1281,7 @@ public class OrdersController {
             proxyDetail.setBuyUserCode(orders.getCreateBy());
             proxyDetail.setCreateBy(proxy1.createBy);
             proxyDetail.setOrderNo(orders.getId());
+            proxyDetail.setOrderPostalCode(orders.getOrderPostalCode());
             proxyDetail.setType(1);
             proxyServer.saveProxyDetail(proxyDetail);
         }
@@ -1025,6 +1294,7 @@ public class OrdersController {
                 proxyDetail.setCreateBy(proxy1.createBy);
                 proxyDetail.setOrderNo(orders.getId());
                 proxyDetail.setType(1);
+                proxyDetail.setOrderPostalCode(orders.getOrderPostalCode());
                 proxyServer.saveProxyDetail(proxyDetail);
             }
         }
@@ -1037,6 +1307,7 @@ public class OrdersController {
                 proxyDetail.setCreateBy(proxy1.createBy);
                 proxyDetail.setOrderNo(orders.getId());
                 proxyDetail.setType(1);
+                proxyDetail.setOrderPostalCode(orders.getOrderPostalCode());
                 proxyServer.saveProxyDetail(proxyDetail);
             }
         }
@@ -1049,6 +1320,7 @@ public class OrdersController {
                 proxyDetail.setCreateBy(proxy1.createBy);
                 proxyDetail.setOrderNo(orders.getId());
                 proxyDetail.setType(1);
+                proxyDetail.setOrderPostalCode(orders.getOrderPostalCode());
                 proxyServer.saveProxyDetail(proxyDetail);
             }
         }

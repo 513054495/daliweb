@@ -11,7 +11,7 @@ import com.code90.daliweb.request.CommonRequest;
 public class AnnouncementSaveReq extends CommonRequest {
     private String title;
     private int type;
-    private int level;
+    private String level;
     private String content;
     private String files;
     private String createBy;
@@ -30,14 +30,6 @@ public class AnnouncementSaveReq extends CommonRequest {
 
     public void setType(int type) {
         this.type = type;
-    }
-
-    public int getLevel() {
-        return level;
-    }
-
-    public void setLevel(int level) {
-        this.level = level;
     }
 
     public String getContent() {
@@ -62,5 +54,13 @@ public class AnnouncementSaveReq extends CommonRequest {
 
     public void setCreateBy(String createBy) {
         this.createBy = createBy;
+    }
+
+    public String getLevel() {
+        return level;
+    }
+
+    public void setLevel(String level) {
+        this.level = level;
     }
 }

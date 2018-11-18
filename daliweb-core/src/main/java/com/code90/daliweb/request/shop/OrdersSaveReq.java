@@ -24,6 +24,7 @@ public class OrdersSaveReq extends CommonRequest {
     private String createBy;
     private int isShoppingCart;
     private String aSqzwx;
+    private String orderPostalCode;
     private List<OrderDetailSaveReq> orderDetailSaveReqs=new ArrayList<>();
 
     public String getReceiver() {

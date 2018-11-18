@@ -17,4 +17,8 @@ public interface ProxyDetailService extends JpaRepository<ProxyDetail,Integer>,J
     List<ProxyDetail> getProxyDetailByOrderId(String id);
     @Query("select coalesce(sum(p.money),0) from ProxyDetail p where p.createBy=?1 and p.status=1")
     double getAllMoneyByUserCode(String userCode);
+    @Query("select coalesce(sum(p.money),0) from ProxyDetail p where p.status=1")
+    double getAllMoney();
+    @Query("select substring(p.createTime,1,7),coalesce(sum(p.money),0) from ProxyDetail p where p.status=1 group by substring(p.createTime,1,7)")
+    List<Object[]> getProxyDetailByMonth();
 }

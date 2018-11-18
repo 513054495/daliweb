@@ -1,6 +1,7 @@
 package com.code90.daliweb.server;
 
 import com.code90.daliweb.domain.OrderDetail;
+import com.code90.daliweb.request.shop.CommoditySummaryReq;
 
 import java.util.List;
 
@@ -31,4 +32,14 @@ public interface OrderDetailServer extends BaseServer {
      */
     List<OrderDetail> getOrderDetailByCommodityId(String commodityId);
 
+    /**
+     * 根据订单详情状态获取订单详情数量
+     * @param i
+     * @return 订单详情数量
+     */
+    int getOrderDetailByStatus(int i);
+
+    List<OrderDetail> getAll(CommoditySummaryReq req);
+
+    List<OrderDetail> findOrderDteailCriteria(int page, int pageSize, CommoditySummaryReq req);
 }

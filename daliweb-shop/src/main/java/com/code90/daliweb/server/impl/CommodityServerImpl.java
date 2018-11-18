@@ -107,4 +107,9 @@ public class CommodityServerImpl implements CommodityServer {
         List<Commodity> list=commodities.getContent();
         return list;
     }
+
+    @Override
+    public List<Commodity> getAllCommodity() {
+        return commodityService.findAll();
+    }
 }

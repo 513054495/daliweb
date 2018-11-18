@@ -17,4 +17,6 @@ public interface LeaveMessageService extends JpaRepository<LeaveMessage,Integer>
     LeaveMessage getLeaveMessageById(String id);
     @Query("select l from LeaveMessage l where l.createBy=?1")
     List<LeaveMessage> getLeaveMessageByUserCode(String userCode);
+    @Query("select coalesce(count(l),0) from LeaveMessage l where l.status=?1")
+    int getLeaveMessageByState(int i);
 }

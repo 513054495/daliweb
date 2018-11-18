@@ -33,4 +33,11 @@ public interface LevelApplicationServer extends BaseServer  {
      * @return 考级申请
      */
     List<LevelApplication> getByUserCode(String userCode);
+
+    /**
+     * 根据考级状态获取考级数量
+     * @param i
+     * @return 考级数量
+     */
+    int getLevelApplicationByStatus(int i);
 }

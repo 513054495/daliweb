@@ -58,6 +58,9 @@ public class Orders extends  BaseDomain {
     private int status;
     @Column
     private String shipNo;
+    //下单邮编
+    @Column
+    private String orderPostalCode;
 
     public String getId() {
         return id;
@@ -177,5 +180,13 @@ public class Orders extends  BaseDomain {
 
     public void setShipNo(String shipNo) {
         this.shipNo = shipNo;
+    }
+
+    public String getOrderPostalCode() {
+        return orderPostalCode;
+    }
+
+    public void setOrderPostalCode(String orderPostalCode) {
+        this.orderPostalCode = orderPostalCode;
     }
 }

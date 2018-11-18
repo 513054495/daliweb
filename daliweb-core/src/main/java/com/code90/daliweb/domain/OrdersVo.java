@@ -26,6 +26,7 @@ public class OrdersVo extends BaseDomain {
     private int status;
     private int isRefund;
     private String shipNo;
+    private String orderPostalCode;
     private List<CommodityVo> orderCommodities=new ArrayList<>();
 
     public String getId() {
@@ -162,5 +163,13 @@ public class OrdersVo extends BaseDomain {
 
     public void setShipNo(String shipNo) {
         this.shipNo = shipNo;
+    }
+
+    public String getOrderPostalCode() {
+        return orderPostalCode;
+    }
+
+    public void setOrderPostalCode(String orderPostalCode) {
+        this.orderPostalCode = orderPostalCode;
     }
 }

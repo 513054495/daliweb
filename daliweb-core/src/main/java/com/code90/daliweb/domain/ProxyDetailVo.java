@@ -19,6 +19,7 @@ public class ProxyDetailVo extends BaseDomain {
     private int status;
     private double payMoney;
     private double totalMoney;
+    private String orderPostalCode;
 
     public String getId() {
         return id;
@@ -83,5 +84,13 @@ public class ProxyDetailVo extends BaseDomain {
 
     public void setTotalMoney(double totalMoney) {
         this.totalMoney = totalMoney;
+    }
+
+    public String getOrderPostalCode() {
+        return orderPostalCode;
+    }
+
+    public void setOrderPostalCode(String orderPostalCode) {
+        this.orderPostalCode = orderPostalCode;
     }
 }

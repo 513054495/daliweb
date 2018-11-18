@@ -19,4 +19,12 @@ public interface WithdrawService extends JpaRepository<Withdraw,Integer>,JpaSpec
     List<Withdraw> getWithdrawByUserCode(String userCode);
     @Query("select coalesce(sum(w.money),0) from Withdraw w where w.createBy=?1 and w.status=1")
     double getAllMoneyByUserCode(String userCode);
+    @Query("select coalesce(count(w),0) from Withdraw w where w.status=?1")
+    int getWithdrawByStatus(int i);
+    @Query("select coalesce(sum(w.money),0) from Withdraw w where w.status=1")
+    double getAllMoney();
+    @Query("select substring(w.createTime,1,7),coalesce(sum(w.money),0) from Withdraw w where w.status=?1 group by substring(w.createTime,1,7)")
+    List<Object[]> getWithdrawByMonth(int status);
+    @Query("select substring(w.createTime,1,7),coalesce(sum(w.money),0) from Withdraw w group by substring(w.createTime,1,7)")
+    List<Object[]> getWithdrawByMonth();
 }

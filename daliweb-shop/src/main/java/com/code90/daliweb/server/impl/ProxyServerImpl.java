@@ -3,6 +3,7 @@ package com.code90.daliweb.server.impl;
 import com.code90.daliweb.domain.Commodity;
 import com.code90.daliweb.domain.Proxy;
 import com.code90.daliweb.domain.ProxyDetail;
+import com.code90.daliweb.request.shop.ProxyDetailSearchReq;
 import com.code90.daliweb.request.shop.ProxySearchReq;
 import com.code90.daliweb.server.ProxyServer;
 import com.code90.daliweb.service.ProxyDetailService;
@@ -173,5 +174,92 @@ public class ProxyServerImpl implements ProxyServer {
         }
     }
 
+    @Override
+    public double getAllMoney() {
+        return proxyDetailService.getAllMoney();
+    }
+
+    @Override
+    public List<Object[]> getProxyDetailByYear() {
+        List<Object[]> proxyDetails=proxyDetailService.getProxyDetailByMonth();
+        return proxyDetails;
+    }
+
+    @Override
+    public List<ProxyDetail> getAllDetail(ProxyDetailSearchReq req) {
+        Page<ProxyDetail> commodities = proxyDetailService.findAll(new Specification<ProxyDetail>(){
+            @Override
+            public Predicate toPredicate(Root<ProxyDetail> root, CriteriaQuery<?> query, CriteriaBuilder criteriaBuilder) {
+                List<Predicate> list = new ArrayList<Predicate>();
+                if(!StringUtil.isEmpty(req.getCreateBy())){
+                    list.add(criteriaBuilder.equal(root.get("createBy").as(String.class), req.getCreateBy()));
+                }
+                if(!StringUtil.isEmpty(req.getOrderNo())){
+                    list.add(criteriaBuilder.like(root.get("orderNo").as(String.class), "%"+req.getOrderNo()+"%"));
+                }
+                if(!StringUtil.isEmpty(req.getOrderPostalCode())){
+                    list.add(criteriaBuilder.like(root.get("orderPostalCode").as(String.class), "%"+req.getOrderPostalCode()+"%"));
+                }
+                if(req.getType()!=-1){
+                    list.add(criteriaBuilder.equal(root.get("type").as(Integer.class), req.getType()));
+                }
+                if(req.getMinMoney()!=-1){
+                    list.add(criteriaBuilder.greaterThanOrEqualTo(root.get("money").as(Integer.class), req.getMinMoney()));
+                }
+                if(req.getMaxMoney()!=-1){
+                    list.add(criteriaBuilder.lessThan(root.get("money").as(Integer.class), req.getMaxMoney()));
+                }
+                if(!StringUtil.isEmpty(req.getStartTime())){
+                    list.add(criteriaBuilder.greaterThanOrEqualTo(root.get("createTime").as(String.class), req.getStartTime()));
+                }
+                if(!StringUtil.isEmpty(req.getEndTime())){
+                    list.add(criteriaBuilder.lessThanOrEqualTo(root.get("createTime").as(String.class), req.getEndTime()));
+                }
+                Predicate[] p = new Predicate[list.size()];
+                return criteriaBuilder.and(list.toArray(p));
+            }
+        },Pageable.unpaged());
+        List<ProxyDetail> list=commodities.getContent();
+        return list;
+    }
+
+    @Override
+    public List<ProxyDetail> findProxyDteailCriteria(int page, int pageSize, ProxyDetailSearchReq req) {
+        Pageable pageable = new PageRequest(page, pageSize, Sort.Direction.DESC, "createTime");
+        Page<ProxyDetail> commodities = proxyDetailService.findAll(new Specification<ProxyDetail>(){
+            @Override
+            public Predicate toPredicate(Root<ProxyDetail> root, CriteriaQuery<?> query, CriteriaBuilder criteriaBuilder) {
+                List<Predicate> list = new ArrayList<Predicate>();
+                if(!StringUtil.isEmpty(req.getCreateBy())){
+                    list.add(criteriaBuilder.equal(root.get("createBy").as(String.class), req.getCreateBy()));
+                }
+                if(!StringUtil.isEmpty(req.getOrderNo())){
+                    list.add(criteriaBuilder.like(root.get("orderNo").as(String.class), "%"+req.getOrderNo()+"%"));
+                }
+                if(!StringUtil.isEmpty(req.getOrderPostalCode())){
+                    list.add(criteriaBuilder.like(root.get("orderPostalCode").as(String.class), "%"+req.getOrderPostalCode()+"%"));
+                }
+                if(req.getType()!=-1){
+                    list.add(criteriaBuilder.equal(root.get("type").as(Integer.class), req.getType()));
+                }
+                if(req.getMinMoney()!=-1){
+                    list.add(criteriaBuilder.greaterThanOrEqualTo(root.get("money").as(Integer.class), req.getMinMoney()));
+                }
+                if(req.getMaxMoney()!=-1){
+                    list.add(criteriaBuilder.lessThan(root.get("money").as(Integer.class), req.getMaxMoney()));
+                }
+                if(!StringUtil.isEmpty(req.getStartTime())){
+                    list.add(criteriaBuilder.greaterThanOrEqualTo(root.get("createTime").as(String.class), req.getStartTime()));
+                }
+                if(!StringUtil.isEmpty(req.getEndTime())){
+                    list.add(criteriaBuilder.lessThanOrEqualTo(root.get("createTime").as(String.class), req.getEndTime()));
+                }
+                Predicate[] p = new Predicate[list.size()];
+                return criteriaBuilder.and(list.toArray(p));
+            }
+        },pageable);
+        List<ProxyDetail> list=commodities.getContent();
+        return list;
+    }
 
 }

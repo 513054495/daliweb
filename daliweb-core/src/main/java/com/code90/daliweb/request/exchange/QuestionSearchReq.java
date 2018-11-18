@@ -15,6 +15,8 @@ public class QuestionSearchReq extends CommonRequest implements Serializable {
     private String title;
     private String createBy;
     private int status;
+    private String startTime;
+    private String endTime;
     private int page;
     private int pageSize;
 
@@ -56,5 +58,21 @@ public class QuestionSearchReq extends CommonRequest implements Serializable {
 
     public void setStatus(int status) {
         this.status = status;
+    }
+
+    public String getStartTime() {
+        return startTime;
+    }
+
+    public void setStartTime(String startTime) {
+        this.startTime = startTime;
+    }
+
+    public String getEndTime() {
+        return endTime;
+    }
+
+    public void setEndTime(String endTime) {
+        this.endTime = endTime;
     }
 }

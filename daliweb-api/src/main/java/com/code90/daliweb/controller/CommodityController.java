@@ -163,6 +163,17 @@ public class CommodityController {
     }
 
     /**
+     * 获取全部商品
+     * @return 全部商品信息
+     */
+    @RequestMapping(value="/getAllCommodity",method=RequestMethod.GET)
+    public CommonResponse getAllCommodity(){
+        List<Commodity> commodities=commodityServer.getAllCommodity();
+        logger.info("获取商品成功");
+        return new CommonResponse("获取商品成功", "info", commodities);
+    }
+
+    /**
      * 分页查询商品
      * @param req 分页条件
      * @return 商品列表

@@ -2,6 +2,7 @@ package com.code90.daliweb.server;
 
 import com.code90.daliweb.domain.Proxy;
 import com.code90.daliweb.domain.ProxyDetail;
+import com.code90.daliweb.request.shop.ProxyDetailSearchReq;
 import com.code90.daliweb.request.shop.ProxySearchReq;
 
 import java.util.List;
@@ -80,4 +81,32 @@ public interface ProxyServer extends BaseServer {
      * @param id
      */
     void deleteByOrdersId(String id);
+
+    /**
+     * 获取全部代理金额
+     * @return 代理金额
+     */
+    double getAllMoney();
+
+    /**
+     * 获取每月代理提成金额
+     * @return 每月代理提成金额
+     */
+    List<Object[]> getProxyDetailByYear();
+
+    /**
+     * 获取全部代理情况
+     * @param req
+     * @return 全部代理情况
+     */
+    List<ProxyDetail> getAllDetail(ProxyDetailSearchReq req);
+
+    /**
+     * 分页获取全部代理情况
+     * @param page
+     * @param pageSize
+     * @param req
+     * @return 全部代理情况
+     */
+    List<ProxyDetail> findProxyDteailCriteria(int page, int pageSize, ProxyDetailSearchReq req);
 }

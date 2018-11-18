@@ -3,6 +3,7 @@ package com.code90.daliweb.controller;
 import com.code90.daliweb.domain.*;
 import com.code90.daliweb.request.exchange.*;
 import com.code90.daliweb.response.CommonResponse;
+import com.code90.daliweb.server.AnnouncementServer;
 import com.code90.daliweb.server.TaskCollectionServer;
 import com.code90.daliweb.server.TaskServer;
 import com.code90.daliweb.server.UserServer;
@@ -36,6 +37,8 @@ public class TaskController{
     private TaskCollectionServer taskCollectionServer;
     @Autowired
     private UserServer userServer;
+    @Autowired
+    private AnnouncementServer announcementServer;
 
     /**
      * 新增任务
@@ -140,6 +143,14 @@ public class TaskController{
                 for (String id : id_list) {
                     Task task = (Task) taskServer.getObjectById(id);
                     task.setStatus(status);
+                    if(status==1){
+                        Announcement announcement=new Announcement();
+                        announcement.setTitle("\""+task.getTitle()+"\"任务通知");
+                        announcement.setContent("管理员发布了\""+task.getTitle()+"\"的任务，请您尽快到学习-->任务板块领取任务！");
+                        announcement.setLevel("3");
+                        announcement.setStatus(1);
+                        announcementServer.save(announcement);
+                    }
                     taskServer.save(task);
                 }
                 logger.info("任务修改成功");

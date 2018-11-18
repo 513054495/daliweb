@@ -1,10 +1,15 @@
 package com.code90.daliweb.server.impl;
 
+import com.code90.daliweb.domain.ProxyDetail;
 import com.code90.daliweb.domain.Recommend;
 import com.code90.daliweb.domain.User;
+import com.code90.daliweb.domain.UserChangeLog;
+import com.code90.daliweb.request.user.UserChangeLogReq;
 import com.code90.daliweb.request.user.UserSearchReq;
 import com.code90.daliweb.server.UserServer;
 import com.code90.daliweb.service.RecommendService;
+import com.code90.daliweb.service.UserChangeLogService;
+import com.code90.daliweb.utils.DateUtils;
 import com.code90.daliweb.utils.StringUtil;
 import com.code90.daliweb.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -20,6 +25,7 @@ import javax.persistence.criteria.CriteriaQuery;
 import javax.persistence.criteria.Predicate;
 import javax.persistence.criteria.Root;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 /**
@@ -34,6 +40,8 @@ public class UserServerImpl implements UserServer {
     private UserService userService;
     @Autowired
     private RecommendService recommendService;
+    @Autowired
+    private UserChangeLogService userChangeLogService;
 
 
     @Override
@@ -63,6 +71,9 @@ public class UserServerImpl implements UserServer {
             @Override
             public Predicate toPredicate(Root<User> root, CriteriaQuery<?> query, CriteriaBuilder criteriaBuilder) {
                 List<Predicate> list = new ArrayList<Predicate>();
+                if(!StringUtil.isEmpty(req.getUserCode())){
+                    list.add(criteriaBuilder.like(root.get("userCode").as(String.class), "%"+req.getUserCode()+"%"));
+                }
                 if(!StringUtil.isEmpty(req.getUserName())){
                     list.add(criteriaBuilder.like(root.get("userName").as(String.class), "%"+req.getUserName()+"%"));
                 }
@@ -110,6 +121,9 @@ public class UserServerImpl implements UserServer {
             @Override
             public Predicate toPredicate(Root<User> root, CriteriaQuery<?> query, CriteriaBuilder criteriaBuilder) {
                 List<Predicate> list = new ArrayList<Predicate>();
+                if(!StringUtil.isEmpty(req.getUserCode())){
+                    list.add(criteriaBuilder.like(root.get("userCode").as(String.class), "%"+req.getUserCode()+"%"));
+                }
                 if(!StringUtil.isEmpty(req.getUserName())){
                     list.add(criteriaBuilder.like(root.get("userName").as(String.class), "%"+req.getUserName()+"%"));
                 }
@@ -158,6 +172,9 @@ public class UserServerImpl implements UserServer {
             @Override
             public Predicate toPredicate(Root<User> root, CriteriaQuery<?> query, CriteriaBuilder criteriaBuilder) {
                 List<Predicate> list = new ArrayList<Predicate>();
+                if(!StringUtil.isEmpty(req.getUserCode())){
+                    list.add(criteriaBuilder.like(root.get("userCode").as(String.class), "%"+req.getUserCode()+"%"));
+                }
                 if(!StringUtil.isEmpty(req.getUserName())){
                     list.add(criteriaBuilder.like(root.get("userName").as(String.class), "%"+req.getUserName()+"%"));
                 }
@@ -222,6 +239,97 @@ public class UserServerImpl implements UserServer {
     @Override
     public List<User> getAll() {
         return userService.findAll();
+    }
+
+    @Override
+    public int getNewUserByCurrentMonth() {
+        Page<User> commodities = userService.findAll(new Specification<User>(){
+            @Override
+            public Predicate toPredicate(Root<User> root, CriteriaQuery<?> query, CriteriaBuilder criteriaBuilder) {
+                List<Predicate> list = new ArrayList<Predicate>();
+                list.add(criteriaBuilder.greaterThanOrEqualTo(root.get("createTime").as(String.class),DateUtils.getFirstDateOfMonth(new Date()) ));
+                list.add(criteriaBuilder.lessThanOrEqualTo(root.get("createTime").as(String.class), DateUtils.getLastDateOfMonth(new Date())));
+                Predicate[] p = new Predicate[list.size()];
+                return criteriaBuilder.and(list.toArray(p));
+            }
+        },Pageable.unpaged());
+        List<User> list=commodities.getContent();
+        return list.size();
+    }
+
+    @Override
+    public void saveUserChangeLog(UserChangeLog userChangeLog) {
+        userChangeLogService.save(userChangeLog);
+    }
+
+    @Override
+    public int getNewVipUserByCurrentMonth() {
+        Page<UserChangeLog> commodities = userChangeLogService.findAll(new Specification<UserChangeLog>(){
+            @Override
+            public Predicate toPredicate(Root<UserChangeLog> root, CriteriaQuery<?> query, CriteriaBuilder criteriaBuilder) {
+                List<Predicate> list = new ArrayList<Predicate>();
+                list.add(criteriaBuilder.equal(root.get("type").as(Integer.class), 0));
+                list.add(criteriaBuilder.greaterThanOrEqualTo(root.get("createTime").as(String.class),DateUtils.getFirstDateOfMonth(new Date()) ));
+                list.add(criteriaBuilder.lessThanOrEqualTo(root.get("createTime").as(String.class), DateUtils.getLastDateOfMonth(new Date())));
+                Predicate[] p = new Predicate[list.size()];
+                return criteriaBuilder.and(list.toArray(p));
+            }
+        },Pageable.unpaged());
+        List<UserChangeLog> list=commodities.getContent();
+        return list.size();
+    }
+
+    @Override
+    public List<UserChangeLog> getAllChangeLog(UserChangeLogReq req) {
+        Page<UserChangeLog> users = userChangeLogService.findAll(new Specification<UserChangeLog>(){
+            @Override
+            public Predicate toPredicate(Root<UserChangeLog> root, CriteriaQuery<?> query, CriteriaBuilder criteriaBuilder) {
+                List<Predicate> list = new ArrayList<Predicate>();
+                if(!StringUtil.isEmpty(req.getCreateBy())){
+                    list.add(criteriaBuilder.equal(root.get("createBy").as(String.class), req.getCreateBy()));
+                }
+                if(!StringUtil.isEmpty(req.getStartTime())){
+                    list.add(criteriaBuilder.greaterThanOrEqualTo(root.get("createTime").as(String.class), req.getStartTime()));
+                }
+                if(!StringUtil.isEmpty(req.getEndTime())){
+                    list.add(criteriaBuilder.lessThanOrEqualTo(root.get("createTime").as(String.class), req.getEndTime()));
+                }
+                if(req.getType()!=-1){
+                    list.add(criteriaBuilder.equal(root.get("type").as(Integer.class), req.getType()));
+                }
+                Predicate[] p = new Predicate[list.size()];
+                return criteriaBuilder.and(list.toArray(p));
+            }
+        },Pageable.unpaged());
+        List<UserChangeLog> list=users.getContent();
+        return list;
+    }
+
+    @Override
+    public List<UserChangeLog> findUserChangeLogCriteria(int page, int pageSize, UserChangeLogReq req) {
+        Pageable pageable = new PageRequest(page, pageSize, Sort.Direction.DESC, "createTime");
+        Page<UserChangeLog> users = userChangeLogService.findAll(new Specification<UserChangeLog>(){
+            @Override
+            public Predicate toPredicate(Root<UserChangeLog> root, CriteriaQuery<?> query, CriteriaBuilder criteriaBuilder) {
+                List<Predicate> list = new ArrayList<Predicate>();
+                if(!StringUtil.isEmpty(req.getCreateBy())){
+                    list.add(criteriaBuilder.equal(root.get("createBy").as(String.class), req.getCreateBy()));
+                }
+                if(!StringUtil.isEmpty(req.getStartTime())){
+                    list.add(criteriaBuilder.greaterThanOrEqualTo(root.get("createTime").as(String.class), req.getStartTime()));
+                }
+                if(!StringUtil.isEmpty(req.getEndTime())){
+                    list.add(criteriaBuilder.lessThanOrEqualTo(root.get("createTime").as(String.class), req.getEndTime()));
+                }
+                if(req.getType()!=-1){
+                    list.add(criteriaBuilder.equal(root.get("type").as(Integer.class), req.getType()));
+                }
+                Predicate[] p = new Predicate[list.size()];
+                return criteriaBuilder.and(list.toArray(p));
+            }
+        },pageable);
+        List<UserChangeLog> list=users.getContent();
+        return list;
     }
 
 }

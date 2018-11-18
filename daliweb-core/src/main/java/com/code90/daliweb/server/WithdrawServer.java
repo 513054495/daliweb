@@ -37,4 +37,24 @@ public interface WithdrawServer extends BaseServer {
      * @return 所有提现金额
      */
     double getAllMoneyByUserCode(String userCode);
+
+    /**
+     * 根据状态获取提现的数量
+     * @param i
+     * @return
+     */
+    int getWithdrawByStatus(int i);
+
+    /**
+     * 获取全部已提取金额
+     * @return 已提取金额
+     */
+    double getAllMoney();
+
+    /**
+     * 获取每个月的提现金额
+     * @return 每个月的提现金额
+     */
+    List<Object[]> getWithdrawByYear(int status);
+
 }

@@ -33,4 +33,10 @@ public interface CommodityServer extends BaseServer {
      * @return 商品列表
      */
     List<Commodity> getAll(CommoditySearchReq req);
+
+    /**
+     * 获取全部商品
+     * @return 全部商品
+     */
+    List<Commodity> getAllCommodity();
 }

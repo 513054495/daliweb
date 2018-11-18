@@ -12,7 +12,7 @@ public class AnnouncementChangeReq extends CommonRequest {
     private String id;
     private String title;
     private int type;
-    private int level;
+    private String level;
     private String content;
     private String files;
 
@@ -40,14 +40,6 @@ public class AnnouncementChangeReq extends CommonRequest {
         this.type = type;
     }
 
-    public int getLevel() {
-        return level;
-    }
-
-    public void setLevel(int level) {
-        this.level = level;
-    }
-
     public String getContent() {
         return content;
     }
@@ -62,5 +54,13 @@ public class AnnouncementChangeReq extends CommonRequest {
 
     public void setFiles(String files) {
         this.files = files;
+    }
+
+    public String getLevel() {
+        return level;
+    }
+
+    public void setLevel(String level) {
+        this.level = level;
     }
 }

@@ -33,6 +33,9 @@ public class ProxyDetail extends BaseDomain {
     //代理获得状态
     @Column
     private int status;
+    //地区
+    @Column
+    private String orderPostalCode;
 
     public String getId() {
         return id;
@@ -81,5 +84,13 @@ public class ProxyDetail extends BaseDomain {
 
     public void setOrderNo(String orderNo) {
         this.orderNo = orderNo;
+    }
+
+    public String getOrderPostalCode() {
+        return orderPostalCode;
+    }
+
+    public void setOrderPostalCode(String orderPostalCode) {
+        this.orderPostalCode = orderPostalCode;
     }
 }

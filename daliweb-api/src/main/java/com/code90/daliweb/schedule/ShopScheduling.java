@@ -79,6 +79,10 @@ public class ShopScheduling {
                             User user = userServer.getUserByUserCode(orders.createBy);
                             user.setUserType(1);
                             userServer.save(user);
+                            UserChangeLog userChangeLog=new UserChangeLog();
+                            userChangeLog.setType(0);
+                            userChangeLog.createBy=orders.createBy;
+                            userServer.saveUserChangeLog(userChangeLog);
                         }
                         if(rules.getType()==0) {
                             money += orderDetail.getOrderNum() * commodity.getPrice();
@@ -90,6 +94,7 @@ public class ShopScheduling {
                 for (ProxyDetail proxyDetail : proxyDetails){
                     Proxy proxy=proxyServer.getProxyByUserCode(proxyDetail.createBy);
                     proxyDetail.setStatus(1);
+                    proxyDetail.setOrderPostalCode(orders.getOrderPostalCode());
                     proxyDetail.setMoney(calcProxyMoney(proxy.getType(),money,rules,proxyDetail.getType()));
                     proxyServer.saveProxyDetail(proxyDetail);
                 }

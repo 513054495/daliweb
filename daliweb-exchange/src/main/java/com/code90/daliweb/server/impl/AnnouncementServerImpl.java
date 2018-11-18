@@ -2,7 +2,6 @@ package com.code90.daliweb.server.impl;
 
 import com.code90.daliweb.domain.Announcement;
 import com.code90.daliweb.domain.AnnouncementDetail;
-import com.code90.daliweb.domain.LeaveMessage;
 import com.code90.daliweb.domain.User;
 import com.code90.daliweb.request.exchange.AnnouncementSearchReq;
 import com.code90.daliweb.server.AnnouncementServer;
@@ -56,15 +55,15 @@ public class AnnouncementServerImpl implements AnnouncementServer {
         List<Announcement> announcements=new ArrayList<>();
         List<Announcement> list=announcementService.getStartAnnouncement();
         for (Announcement announcement:list){
-            if(announcement.getLevel()==0){
+            if(announcement.getLevel().contains("0")&&user.getUserType()==0){
                 announcements.add(announcement);
-            }else if(announcement.getLevel()==1&&user.getTeamLevel()>0){
+            }else if(announcement.getLevel().contains("1")&&user.getTeamLevel()>0){
                 announcements.add(announcement);
-            }else if(announcement.getLevel()==2&&user.getIsClassMember()==1){
+            }else if(announcement.getLevel().contains("2")&&user.getIsClassMember()==1){
                 announcements.add(announcement);
-            }else if(announcement.getLevel()==3&&user.getCollegeLevel()>0){
+            }else if(announcement.getLevel().contains("3")&&user.getCollegeLevel()>0){
                 announcements.add(announcement);
-            }else if(announcement.getLevel()==4&&user.getAgencyLevel()>0){
+            }else if(announcement.getLevel().contains("4")&&user.getAgencyLevel()>0){
                 announcements.add(announcement);
             }
         }
@@ -103,8 +102,8 @@ public class AnnouncementServerImpl implements AnnouncementServer {
                 if(req.getStatus()!=-1){
                     list.add(criteriaBuilder.equal(root.get("status").as(Integer.class), req.getStatus()));
                 }
-                if(req.getLevel()!=-1){
-                    list.add(criteriaBuilder.equal(root.get("level").as(Integer.class), req.getLevel()));
+                if(!StringUtil.isEmpty(req.getLevel())){
+                    list.add(criteriaBuilder.like(root.get("level").as(String.class), "%"+req.getLevel()+"%"));
                 }
                 if(!StringUtil.isEmpty(req.getStartTime())){
                     list.add(criteriaBuilder.greaterThanOrEqualTo(root.get("modifyTime").as(String.class), req.getStartTime()));
@@ -133,8 +132,8 @@ public class AnnouncementServerImpl implements AnnouncementServer {
                 if(req.getStatus()!=-1){
                     list.add(criteriaBuilder.equal(root.get("status").as(Integer.class), req.getStatus()));
                 }
-                if(req.getLevel()!=-1){
-                    list.add(criteriaBuilder.equal(root.get("level").as(Integer.class), req.getLevel()));
+                if(!StringUtil.isEmpty(req.getLevel())){
+                    list.add(criteriaBuilder.like(root.get("level").as(String.class), "%"+req.getLevel()+"%"));
                 }
                 if(!StringUtil.isEmpty(req.getStartTime())){
                     list.add(criteriaBuilder.greaterThanOrEqualTo(root.get("modifyTime").as(String.class), req.getStartTime()));

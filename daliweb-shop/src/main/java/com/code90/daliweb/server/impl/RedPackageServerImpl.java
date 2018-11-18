@@ -46,4 +46,9 @@ public class RedPackageServerImpl implements RedPackageServer {
     public RedPackageDetail getRedPackageDetail(String userCode, String shareCode) {
         return redPackageService.getRedPackageDetail(userCode,shareCode);
     }
+
+    @Override
+    public double getAllRedPackage() {
+        return redPackageService.getAllRedPackage();
+    }
 }

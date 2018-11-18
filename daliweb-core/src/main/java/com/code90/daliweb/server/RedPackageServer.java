@@ -30,4 +30,10 @@ public interface RedPackageServer extends BaseServer {
      * @return 红包记录
      */
     RedPackageDetail getRedPackageDetail(String userCode, String shareCode);
+
+    /**
+     * 获取全部的红包金额
+     * @return 红包金额
+     */
+    double getAllRedPackage();
 }

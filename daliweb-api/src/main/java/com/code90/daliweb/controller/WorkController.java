@@ -3,10 +3,7 @@ package com.code90.daliweb.controller;
 import com.code90.daliweb.domain.*;
 import com.code90.daliweb.request.learn.*;
 import com.code90.daliweb.response.CommonResponse;
-import com.code90.daliweb.server.SubjectServer;
-import com.code90.daliweb.server.WorkDetailServer;
-import com.code90.daliweb.server.WorkScheduleServer;
-import com.code90.daliweb.server.WorkServer;
+import com.code90.daliweb.server.*;
 import com.code90.daliweb.utils.StringUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -35,6 +32,8 @@ public class WorkController {
     private WorkDetailServer workDetailServer;
     @Autowired
     private SubjectServer subjectServer;
+    @Autowired
+    private AnnouncementServer announcementServer;
 
     /**
      * 发布作业
@@ -154,6 +153,14 @@ public class WorkController {
                     Work work = (Work) workServer.getObjectById(id);
                     work.setStatus(status);
                     workServer.save(work);
+                    if(status==1){
+                        Announcement announcement=new Announcement();
+                        announcement.setTitle("\""+work.getTitle()+"\"作业通知");
+                        announcement.setContent("管理员发布了\""+work.getTitle()+"\"的作业，请您尽快到学习-->作业板块完成作业！");
+                        announcement.setLevel("2,3");
+                        announcement.setStatus(1);
+                        announcementServer.save(announcement);
+                    }
                 }
                 logger.info("作业修改成功");
                 return new CommonResponse("修改成功");

@@ -22,4 +22,7 @@ public interface OrderDetailService extends JpaRepository<OrderDetail,Integer>,J
 
     @Query("select o from OrderDetail o where o.id=?1 ")
     OrderDetail getOrderDetailById(String id);
+
+    @Query("select coalesce(count(o),0) from OrderDetail o where o.status=?1 ")
+    int getOrderDetailByStatus(int i);
 }

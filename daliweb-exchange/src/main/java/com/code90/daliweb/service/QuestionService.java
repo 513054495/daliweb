@@ -14,4 +14,6 @@ import org.springframework.data.jpa.repository.Query;
 public interface QuestionService extends JpaRepository<Question,Integer>,JpaSpecificationExecutor<Question> {
     @Query("select q from Question q where q.id=?1")
     Object getQuestionById(String id);
+    @Query("select coalesce(count(q),0) from Question q where q.status=?1")
+    int getQuestionByStatus(int i);
 }

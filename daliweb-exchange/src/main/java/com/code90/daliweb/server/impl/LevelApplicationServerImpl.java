@@ -109,4 +109,9 @@ public class LevelApplicationServerImpl implements LevelApplicationServer {
     public List<LevelApplication> getByUserCode(String userCode) {
         return levelApplicationService.getByUserCode(userCode);
     }
+
+    @Override
+    public int getLevelApplicationByStatus(int i) {
+        return levelApplicationService.getLevelApplicationByStatus(i);
+    }
 }

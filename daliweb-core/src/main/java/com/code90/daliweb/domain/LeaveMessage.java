@@ -22,7 +22,7 @@ public class LeaveMessage extends BaseDomain {
     @Column
     @Lob
     private String content;
-    //状态
+    //状态(0.待处理 1.已处理 2.已忽略）
     @Column
     private int status;
     //回复内容

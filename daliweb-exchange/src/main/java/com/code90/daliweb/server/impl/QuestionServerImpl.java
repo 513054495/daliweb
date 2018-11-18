@@ -62,6 +62,12 @@ public class QuestionServerImpl implements QuestionServer {
                 if(req.getStatus()!=-1){
                     list.add(criteriaBuilder.equal(root.get("status").as(Integer.class), req.getStatus()));
                 }
+                if(!StringUtil.isEmpty(req.getStartTime())){
+                    list.add(criteriaBuilder.greaterThanOrEqualTo(root.get("createTime").as(String.class), req.getStartTime()));
+                }
+                if(!StringUtil.isEmpty(req.getEndTime())){
+                    list.add(criteriaBuilder.lessThanOrEqualTo(root.get("createTime").as(String.class), req.getEndTime()));
+                }
                 Predicate[] p = new Predicate[list.size()];
                 return criteriaBuilder.and(list.toArray(p));
             }
@@ -86,11 +92,22 @@ public class QuestionServerImpl implements QuestionServer {
                 if(req.getStatus()!=-1){
                     list.add(criteriaBuilder.equal(root.get("status").as(Integer.class), req.getStatus()));
                 }
+                if(!StringUtil.isEmpty(req.getStartTime())){
+                    list.add(criteriaBuilder.greaterThanOrEqualTo(root.get("createTime").as(String.class), req.getStartTime()));
+                }
+                if(!StringUtil.isEmpty(req.getEndTime())){
+                    list.add(criteriaBuilder.lessThanOrEqualTo(root.get("createTime").as(String.class), req.getEndTime()));
+                }
                 Predicate[] p = new Predicate[list.size()];
                 return criteriaBuilder.and(list.toArray(p));
             }
         },pageable);
         List<Question> list=subjects.getContent();
         return list;
+    }
+
+    @Override
+    public int getQuestionByStatus(int i) {
+        return questionService.getQuestionByStatus(i);
     }
 }

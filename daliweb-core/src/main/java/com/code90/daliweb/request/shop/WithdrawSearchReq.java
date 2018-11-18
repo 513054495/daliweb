@@ -15,6 +15,10 @@ public class WithdrawSearchReq extends CommonRequest implements Serializable {
     private int pageSize;
     private int status;
     private String createBy;
+    private int minMoney;
+    private int maxMoney;
+    private String startTime;
+    private String endTime;
 
     public String getCreateBy() {
         return createBy;
@@ -46,5 +50,39 @@ public class WithdrawSearchReq extends CommonRequest implements Serializable {
 
     public void setPage(int page) {
         this.page = page;
+    }
+
+
+
+    public String getStartTime() {
+        return startTime;
+    }
+
+    public void setStartTime(String startTime) {
+        this.startTime = startTime;
+    }
+
+    public String getEndTime() {
+        return endTime;
+    }
+
+    public void setEndTime(String endTime) {
+        this.endTime = endTime;
+    }
+
+    public int getMinMoney() {
+        return minMoney;
+    }
+
+    public void setMinMoney(int minMoney) {
+        this.minMoney = minMoney;
+    }
+
+    public int getMaxMoney() {
+        return maxMoney;
+    }
+
+    public void setMaxMoney(int maxMoney) {
+        this.maxMoney = maxMoney;
     }
 }

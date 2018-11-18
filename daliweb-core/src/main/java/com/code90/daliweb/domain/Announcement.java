@@ -21,12 +21,12 @@ public class Announcement extends BaseDomain {
     //标题
     @Column
     private String title;
-    //公告类型（0.系统消息，1.通知公告，2.赛果公告）
+    //公告类型（0.系统消息，1.通知公告）
     @Column
     private int type;
-    //接收人类型（0.全部用户，1.汉学团用户，2.汉学堂用户 3.汉书院用户 4.代理用户）
+    //接收人类型（0.普通用户，1.汉学团用户，2.汉学堂用户 3.汉书院用户 4.代理用户）
     @Column
-    private int level;
+    private String level;
     //内容
     @Column
     @Lob
@@ -62,14 +62,6 @@ public class Announcement extends BaseDomain {
         this.type = type;
     }
 
-    public int getLevel() {
-        return level;
-    }
-
-    public void setLevel(int level) {
-        this.level = level;
-    }
-
     public String getContent() {
         return content;
     }
@@ -92,5 +84,13 @@ public class Announcement extends BaseDomain {
 
     public void setStatus(int status) {
         this.status = status;
+    }
+
+    public String getLevel() {
+        return level;
+    }
+
+    public void setLevel(String level) {
+        this.level = level;
     }
 }
