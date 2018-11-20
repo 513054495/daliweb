@@ -258,11 +258,10 @@ public class ExamController {
                 String[] id_list=ids.split(",");
                 for (String id : id_list){
                     Exam exam=(Exam) examServer.getObjectById(id);
-                    if(exam.getStatus()==0) {
-                        examServer.delete(exam);
-                    }else{
-                        logger.error("删除失败，只能删除未开始的考试");
-                        return new CommonResponse("删除失败，只能删除未开始的考试",3);
+                    examServer.delete(exam);
+                    List<ExamSchedule> examSchedules=examScheduleServer.getAllByExanId(exam.getId());
+                    for(ExamSchedule examSchedule : examSchedules){
+                        examScheduleServer.delete(examSchedule);
                     }
                 }
                 logger.info("考试删除成功");

@@ -17,6 +17,6 @@ public interface ExamScheduleService extends JpaRepository<ExamSchedule,Integer>
     Object getExamSchedleById(String id);
     @Query("select e from ExamSchedule e where e.examId=?1 order by e.point desc")
     List<ExamSchedule> getAllByExanId(String id);
-    @Query("select e from ExamSchedule e where e.examId=?1 and e.createBy=?2")
+    @Query("select e from ExamSchedule e where e.examId=?1 and e.createBy=?2 order by e.createTime desc")
     ExamSchedule getAllByExanIdAndCreateBy(String id,String userCode);
 }

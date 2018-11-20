@@ -11,6 +11,6 @@ import org.springframework.data.jpa.repository.Query;
  * @create 2018-09-24 15:09
  **/
 public interface SubjectScheduleService extends JpaRepository<SubjectSchedule,Integer>,JpaSpecificationExecutor<SubjectSchedule> {
-    @Query("select s from SubjectSchedule s where s.createBy=?1")
+    @Query("select s from SubjectSchedule s where s.createBy=?1 order by s.createTime desc")
     SubjectSchedule getScheduleByUserCode(String userCode);
 }

@@ -14,7 +14,7 @@ import org.springframework.data.jpa.repository.Query;
 public interface RegistrationDetailService extends JpaRepository<RegistrationDetail,Integer>,JpaSpecificationExecutor<RegistrationDetail> {
     @Query("select r from RegistrationDetail r where r.id=?1")
     RegistrationDetail getRegistrationDetailById(String id);
-    @Query("select r from RegistrationDetail r where r.registrationId=?1 and r.createBy=?2 and r.status=1")
+    @Query("select r from RegistrationDetail r where r.registrationId=?1 and r.createBy=?2 and r.status=1 order by c.createTime desc")
     RegistrationDetail getRegistrationDetailByIdAndCreateBy(String id, String userCode);
     @Query("select r from RegistrationDetail r where r.orderId=?1 and r.status=0")
     RegistrationDetail getRegistrationDetailByOrderId(String id);

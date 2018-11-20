@@ -15,4 +15,6 @@ public interface LearnContentService extends JpaRepository<LearnContent,Integer>
     LearnContent getLearnContentById(String id);
     @Query("select max(l.level) from LearnContent l ")
     int getMaxLevel();
+    @Query("select l from LearnContent l where l.topicId=?1")
+    LearnContent getLearnContentByTopicId(String id);
 }

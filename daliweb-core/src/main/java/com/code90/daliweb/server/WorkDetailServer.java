@@ -39,4 +39,11 @@ public interface WorkDetailServer extends BaseServer {
      * @return 作业详情
      */
     WorkDetail getAllByWorkScheduleIdAndCreateByAndSubjectId(String id, String userCode, int subjectId);
+
+    /**
+     * 根据进度编号获取作业详情
+     * @param id
+     * @return 获取作业详情
+     */
+    List<WorkDetail> getAllByWorkScheduleId(String id);
 }

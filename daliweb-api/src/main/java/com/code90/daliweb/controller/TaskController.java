@@ -298,11 +298,10 @@ public class TaskController{
                 String[] id_list=ids.split(",");
                 for (String id : id_list){
                     Task task=(Task) taskServer.getObjectById(id);
-                    if(task.getStatus()==0) {
-                        taskServer.delete(task);
-                    }else{
-                        logger.error("删除失败，只能删除未发布任务");
-                        return new CommonResponse("删除失败，只能删除未发布任务",3);
+                    taskServer.delete(task);
+                    List<TaskCollection> taskControllers=taskCollectionServer.getTaskControllerByTaskId(task.getId());
+                    for(TaskCollection taskCollection :taskControllers){
+                        taskCollectionServer.delete(taskCollection);
                     }
                 }
                 logger.info("任务删除成功");

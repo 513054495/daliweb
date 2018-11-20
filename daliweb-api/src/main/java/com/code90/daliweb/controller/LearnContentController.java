@@ -167,6 +167,36 @@ public class LearnContentController  {
     }
 
     /**
+     * 根据主题父编号获取内容
+     * @param id 编号
+     * @return 内容
+     */
+    @RequestMapping(value="/getTopicParentById",method=RequestMethod.GET)
+    public CommonResponse getTopicParentById(@RequestParam("id")String id){
+        try{
+            List<LearnTopic> learnTopics=learnTopicServer.getLearnTopicByParentId(id,0);
+            List<LearnContentVo> learnContentVos=new ArrayList<>();
+            for(LearnTopic learnTopic :learnTopics){
+                LearnContent learnContent=learnContentServer.getLearnContentByTopicId(learnTopic.getId());
+                LearnContentVo learnContentVo=new LearnContentVo();
+                BeanUtils.copyProperties(learnContent,learnContentVo);
+                learnContentVo.setTopicName(learnTopic.getTopicName());
+                LearnTopic parentTopic= (LearnTopic) learnTopicServer.getObjectById(learnTopic.getParentId());
+                if(null!=parentTopic){
+                    learnContentVo.setParentId(parentTopic.getId());
+                    learnContentVo.setParentName(parentTopic.getTopicName());
+                }
+                learnContentVos.add(learnContentVo);
+            }
+            logger.info("获取成功");
+            return new CommonResponse("获取成功","info",learnContentVos);
+        }catch (Exception e){
+            logger.error("获取失败,原因："+e.getMessage());
+            return new CommonResponse("获取失败",2,e);
+        }
+    }
+
+    /**
      * 删除内容
      * @param ids 内容编号
      * @return 删除结果

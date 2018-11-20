@@ -38,4 +38,11 @@ public interface TaskCollectionServer extends BaseServer {
      * @return
      */
     TaskCollection getAllByTaskIdAndCreateBy(String id, String userCode);
+
+    /**
+     * 根据任务编号获取任务领取
+     * @param id
+     * @return
+     */
+    List<TaskCollection> getTaskControllerByTaskId(String id);
 }

@@ -30,4 +30,11 @@ public interface WorkScheduleServer extends BaseServer {
      * @return 作业进度列表
      */
     List<WorkSchedule> findWorkScheduleCriteria(int page, int pageSize, WorkScheduleSearchReq req);
+
+    /**
+     * 根据作业编号获取作业进度
+     * @param id
+     * @return 获取作业进度
+     */
+    List<WorkSchedule> getAllByWorkId(String id);
 }

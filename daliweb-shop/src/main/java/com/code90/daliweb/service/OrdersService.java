@@ -15,7 +15,7 @@ import java.util.List;
 public interface OrdersService extends JpaRepository<Orders,Integer>,JpaSpecificationExecutor<Orders> {
     @Query("select o from Orders o where o.id=?1 ")
     Orders getOrdersById(String id);
-    @Query("select o from Orders o where o.createBy=?1 ")
+    @Query("select o from Orders o where o.createBy=?1 order by o.createTime desc")
     List<Orders> getOrdersByCreateBy(String userCode);
     @Query("select coalesce(count(o),0) from Orders o where o.status=?1 ")
     int getOrdersByStatus(int i);

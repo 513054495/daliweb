@@ -388,6 +388,14 @@ public class WorkController {
                 for (String id : id_list){
                     Work work=(Work) workServer.getObjectById(id);
                     workServer.delete(work);
+                    List<WorkSchedule> workSchedules=workScheduleServer.getAllByWorkId(work.getId());
+                    for(WorkSchedule workSchedule:workSchedules){
+                        workScheduleServer.delete(workSchedule);
+                        List<WorkDetail> workDetails=workDetailServer.getAllByWorkScheduleId(workSchedule.getId());
+                        for(WorkDetail workDetail :workDetails){
+                            workDetailServer.delete(workDetail);
+                        }
+                    }
                 }
                 logger.info("作业删除成功");
                 return new CommonResponse("删除成功");

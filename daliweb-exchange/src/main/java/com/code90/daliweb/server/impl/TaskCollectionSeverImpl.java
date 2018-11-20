@@ -102,4 +102,9 @@ public class TaskCollectionSeverImpl implements TaskCollectionServer {
     public TaskCollection getAllByTaskIdAndCreateBy(String id, String userCode) {
         return taskCollectionService.getAllByTaskIdAndCreateBy(id,userCode);
     }
+
+    @Override
+    public List<TaskCollection> getTaskControllerByTaskId(String id) {
+        return taskCollectionService.getTaskControllerByTaskId(id);
+    }
 }

@@ -5,6 +5,8 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
 
+import java.util.List;
+
 /**
  * 任务领取数据库服务接口
  * @author Ray Lin
@@ -15,6 +17,8 @@ public interface TaskCollectionService extends JpaRepository<TaskCollection,Inte
     TaskCollection getTaskCollectionById(String id);
     @Query("select count(t.taskId) from TaskCollection  t where t.taskId=?1 and t.status=1")
     int getCountByTaskId(String taskId);
-    @Query("select t from TaskCollection  t where t.taskId=?1 and t.createBy=?2")
+    @Query("select t from TaskCollection  t where t.taskId=?1 and t.createBy=?2 order by t.createTime desc")
     TaskCollection getAllByTaskIdAndCreateBy(String id, String userCode);
+    @Query("select t from TaskCollection  t where t.taskId=?1 ")
+    List<TaskCollection> getTaskControllerByTaskId(String id);
 }

@@ -102,4 +102,9 @@ public class WorkDetailServerImpl implements WorkDetailServer {
     public WorkDetail getAllByWorkScheduleIdAndCreateByAndSubjectId(String id, String userCode, int subjectId) {
         return workDetailService.getAllByWorkScheduleIdAndCreateByAndSubjectId(id,userCode,subjectId);
     }
+
+    @Override
+    public List<WorkDetail> getAllByWorkScheduleId(String id) {
+        return workDetailService.getAllByWorkScheduleId(id);
+    }
 }

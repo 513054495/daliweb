@@ -19,4 +19,6 @@ public interface WorkDetailService extends JpaRepository<WorkDetail,Integer>,Jpa
     List<WorkDetail> getAllByWorkScheduleIdAndCreateBy(String workScheduleId, String createBy);
     @Query("select w from WorkDetail w where w.workScheduleId=?1 and w.createBy=?2 and w.subjectId=?3 order by w.createTime asc")
     WorkDetail getAllByWorkScheduleIdAndCreateByAndSubjectId(String id, String userCode, int subjectId);
+    @Query("select w from WorkDetail w where w.workScheduleId=?1")
+    List<WorkDetail> getAllByWorkScheduleId(String id);
 }

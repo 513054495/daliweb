@@ -15,7 +15,7 @@ import java.util.List;
 public interface LeaveMessageService extends JpaRepository<LeaveMessage,Integer>,JpaSpecificationExecutor<LeaveMessage> {
     @Query("select l from LeaveMessage l where l.id=?1")
     LeaveMessage getLeaveMessageById(String id);
-    @Query("select l from LeaveMessage l where l.createBy=?1")
+    @Query("select l from LeaveMessage l where l.createBy=?1 order by l.createTime desc")
     List<LeaveMessage> getLeaveMessageByUserCode(String userCode);
     @Query("select coalesce(count(l),0) from LeaveMessage l where l.status=?1")
     int getLeaveMessageByState(int i);

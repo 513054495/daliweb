@@ -104,4 +104,9 @@ public class WorkScheduleServerImpl implements WorkScheduleServer {
         return list;
     }
 
+    @Override
+    public List<WorkSchedule> getAllByWorkId(String id) {
+        return workScheduleService.getAllByWorkId(id);
+    }
+
 }

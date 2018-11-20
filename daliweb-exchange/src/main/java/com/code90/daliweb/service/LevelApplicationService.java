@@ -15,7 +15,7 @@ import java.util.List;
 public interface LevelApplicationService extends JpaRepository<LevelApplication,Integer>,JpaSpecificationExecutor<LevelApplication> {
     @Query("select l from LevelApplication l where l.id=?1 ")
     LevelApplication getObjectById(String id);
-    @Query("select l from LevelApplication l where l.createBy=?1")
+    @Query("select l from LevelApplication l where l.createBy=?1 order by l.createTime desc")
     List<LevelApplication> getByUserCode(String userCode);
     @Query("select coalesce(count(l),0) from LevelApplication l where l.status=?1")
     int getLevelApplicationByStatus(int i);

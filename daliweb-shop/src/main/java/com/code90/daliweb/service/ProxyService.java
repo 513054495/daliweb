@@ -15,7 +15,7 @@ import java.util.List;
 public interface ProxyService extends JpaRepository<Proxy,Integer>,JpaSpecificationExecutor<Proxy> {
     @Query("select p from Proxy p where p.id=?1 and p.status=0")
     Proxy getProxyById(String id);
-    @Query("select p from Proxy p where p.createBy=?1 and p.status=0")
+    @Query("select p from Proxy p where p.createBy=?1 and p.status=0 order by p.createTime desc")
     Proxy getProxyByUserCode(String recommendUserCode);
     @Query("select p from Proxy p where p.type=?1 and p.status=0 ")
     List<Proxy> getProxiesByType(int i);

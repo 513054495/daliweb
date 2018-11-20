@@ -15,7 +15,7 @@ import java.util.List;
 public interface ProxyDetailService extends JpaRepository<ProxyDetail,Integer>,JpaSpecificationExecutor<ProxyDetail> {
     @Query("select p from ProxyDetail p where p.orderNo=?1")
     List<ProxyDetail> getProxyDetailByOrderId(String id);
-    @Query("select coalesce(sum(p.money),0) from ProxyDetail p where p.createBy=?1 and p.status=1")
+    @Query("select coalesce(sum(p.money),0) from ProxyDetail p where p.createBy=?1 and p.status=1 order by p.createTime desc")
     double getAllMoneyByUserCode(String userCode);
     @Query("select coalesce(sum(p.money),0) from ProxyDetail p where p.status=1")
     double getAllMoney();

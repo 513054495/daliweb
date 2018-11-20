@@ -16,6 +16,6 @@ import java.util.List;
 public interface AnnouncementDetailService extends JpaRepository<AnnouncementDetail,Integer>,JpaSpecificationExecutor<AnnouncementDetail> {
     @Query("select a from AnnouncementDetail a where a.announcementId=?1")
     List<AnnouncementDetail> getAnnouncementDetailByAnnouncementId(String id);
-    @Query("select a from AnnouncementDetail a where a.announcementId=?1 and a.createBy=?2")
+    @Query("select a from AnnouncementDetail a where a.announcementId=?1 and a.createBy=?2 order by a.createTime desc")
     AnnouncementDetail getAnnouncementDetailByAnnouncementIdAndUserCode(String id, String userCode);
 }

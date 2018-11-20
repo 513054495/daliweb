@@ -28,4 +28,11 @@ public interface LearnContentServer extends BaseServer {
      * @return 内容列表
      */
     List<LearnContent> findLearnContentCriteria(int page, int pageSize, LearnContentSearchReq req);
+
+    /**
+     * 根据父主题获取学习内容
+     * @param id
+     * @return 获取学习内容
+     */
+    LearnContent getLearnContentByTopicId(String id);
 }

@@ -103,4 +103,9 @@ public class LearnContentServerImpl implements LearnContentServer {
         List<LearnContent> list=subjects.getContent();
         return list;
     }
+
+    @Override
+    public LearnContent getLearnContentByTopicId(String id) {
+        return learnContentService.getLearnContentByTopicId(id);
+    }
 }
