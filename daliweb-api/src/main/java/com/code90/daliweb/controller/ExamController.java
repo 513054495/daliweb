@@ -415,7 +415,7 @@ public class ExamController {
                 Announcement announcement=new Announcement();
                 announcement.setTitle("\""+exam.getTitle()+"\"考试通知");
                 announcement.setContent("管理员发布了\""+exam.getTitle()+"\"的考试，请您尽快到学习-->考试板块完成考试！");
-                announcement.setLevel("2,3");
+                announcement.setLevel("1,2,3,4");
                 announcement.setStatus(1);
                 announcementServer.save(announcement);
             }

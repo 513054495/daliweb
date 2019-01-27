@@ -18,4 +18,6 @@ public interface UserService extends JpaRepository<User,Integer>,JpaSpecificatio
     User getUserById(String id);
     @Query("select u from User u where u.shareCode=?1 ")
     User getUserByShareCode(String shareCode);
+    @Query("select u from User u where u.wechatCode=?1 ")
+    User getUserByWechatCode(String openid);
 }

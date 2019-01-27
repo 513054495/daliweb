@@ -16,4 +16,7 @@ public interface CommodityService extends JpaRepository<Commodity,Integer>,JpaSp
 
     @Query("select c from Commodity c where c.id=?1")
     Commodity getCommodityAndDeleteById(String id);
+
+    @Query("select max(c.level) from Commodity c ")
+    int getMaxLevel();
 }

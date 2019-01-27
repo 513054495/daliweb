@@ -41,7 +41,7 @@ public class ShoppingCartController {
     @RequestMapping(value = "/addShoppingCart",method = RequestMethod.POST)
     public CommonResponse addShoppingCart(@RequestBody ShoppingCartSaveReq req){
         try {
-            ShoppingCart shoppingCart=shoppingCartServer.getShoppingCartByCommodityIdAndcreateBy(req.getCommodityId(),req.getCreateBy(),req.getSpecification());
+            ShoppingCart shoppingCart=shoppingCartServer.getShoppingCartByCommodityIdAndcreateBy(req.getCommodityId(),req.getCreateBy(),req.getNormId());
             if(null!=shoppingCart){
                 shoppingCart.setNum(shoppingCart.getNum()+req.getNum());
             }else{
@@ -93,13 +93,13 @@ public class ShoppingCartController {
      * @return 删除结果
      */
     @RequestMapping(value="/delShoppingCart",method = RequestMethod.DELETE)
-    public CommonResponse delShoppingCart(@RequestParam("ids") String ids,@RequestParam("userCode")String userCode,@RequestParam("specifications") String specifications){
+    public CommonResponse delShoppingCart(@RequestParam("ids") String ids,@RequestParam("userCode")String userCode,@RequestParam("normIds") String normIds){
         try {
             if(!StringUtil.isEmpty(ids)){
                 String[] id_list=ids.split(",");
-                String[] specification_list=specifications.split(",");
+                String[] normId_list=normIds.split(",");
                 for(int i=0;i<id_list.length;i++){
-                    ShoppingCart shoppingCart=shoppingCartServer.getShoppingCartByCommodityIdAndcreateBy(id_list[i],userCode,specification_list[i]);
+                    ShoppingCart shoppingCart=shoppingCartServer.getShoppingCartByCommodityIdAndcreateBy(id_list[i],userCode,normId_list[i]);
                     shoppingCartServer.delete(shoppingCart);
                 }
             }else{
@@ -138,11 +138,12 @@ public class ShoppingCartController {
                 commodityVo.modifyTime = shoppingCart.modifyTime;
                 commodityVo.setOrderNum(shoppingCart.getNum());
                 commodityVo.setDetailId(shoppingCart.getId());
-                String str_num=redisServer.getValue(commodityVo.getId());
+                String str_num=redisServer.getValue(shoppingCart.getNormId());
                 if(!StringUtil.isEmpty(str_num)){
                     commodityVo.setTotalNum(Integer.parseInt(str_num));
                 }
-                commodityVo.setSpecification(shoppingCart.getSpecification());
+                CommodityNorm norm= commodityServer.getCommodityNormById(shoppingCart.getNormId());
+                commodityVo.getCommodityNorms().add(norm);
                 commodityVos.add(commodityVo);
             }
         }

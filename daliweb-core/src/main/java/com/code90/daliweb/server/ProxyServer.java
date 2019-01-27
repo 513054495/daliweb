@@ -109,4 +109,11 @@ public interface ProxyServer extends BaseServer {
      * @return 全部代理情况
      */
     List<ProxyDetail> findProxyDteailCriteria(int page, int pageSize, ProxyDetailSearchReq req);
+
+    /**
+     * 获取所有的代理
+     * @param userCode
+     * @return
+     */
+    Proxy getAllProxyByUserCode(String userCode);
 }

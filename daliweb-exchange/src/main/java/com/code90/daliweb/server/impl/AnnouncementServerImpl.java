@@ -102,6 +102,9 @@ public class AnnouncementServerImpl implements AnnouncementServer {
                 if(req.getStatus()!=-1){
                     list.add(criteriaBuilder.equal(root.get("status").as(Integer.class), req.getStatus()));
                 }
+                if(req.getType()!=-1){
+                    list.add(criteriaBuilder.equal(root.get("type").as(Integer.class), req.getType()));
+                }
                 if(!StringUtil.isEmpty(req.getLevel())){
                     list.add(criteriaBuilder.like(root.get("level").as(String.class), "%"+req.getLevel()+"%"));
                 }
@@ -131,6 +134,9 @@ public class AnnouncementServerImpl implements AnnouncementServer {
                 }
                 if(req.getStatus()!=-1){
                     list.add(criteriaBuilder.equal(root.get("status").as(Integer.class), req.getStatus()));
+                }
+                if(req.getType()!=-1){
+                    list.add(criteriaBuilder.equal(root.get("type").as(Integer.class), req.getType()));
                 }
                 if(!StringUtil.isEmpty(req.getLevel())){
                     list.add(criteriaBuilder.like(root.get("level").as(String.class), "%"+req.getLevel()+"%"));

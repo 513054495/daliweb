@@ -1,6 +1,8 @@
 package com.code90.daliweb.server;
 
 import com.code90.daliweb.domain.Commodity;
+import com.code90.daliweb.domain.CommodityNorm;
+import com.code90.daliweb.domain.CommodityType;
 import com.code90.daliweb.request.shop.CommoditySearchReq;
 
 import java.util.List;
@@ -39,4 +41,26 @@ public interface CommodityServer extends BaseServer {
      * @return 全部商品
      */
     List<Commodity> getAllCommodity();
+
+    int getMaxCommodityTypeId();
+
+    void saveCommodityType(CommodityType commodityType);
+
+    CommodityType getCommodityTypeById(int id);
+
+    void delCommodityType(CommodityType commodityType);
+
+    List<CommodityType> getChildTypeByParentId(int id);
+
+    List<CommodityType> getRootCommodityType();
+
+    void saveCommodityNorms(CommodityNorm commodityNorm);
+
+    List<CommodityNorm> getCommodityNormByCommodityId(String id);
+
+    void delCommodityNorm(CommodityNorm commodityNorm);
+
+    CommodityNorm getCommodityNormById(String normId);
+
+    int getMaxLevel();
 }

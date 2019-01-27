@@ -101,4 +101,10 @@ public interface UserServer extends BaseServer {
     List<UserChangeLog> getAllChangeLog(UserChangeLogReq req);
 
     List<UserChangeLog> findUserChangeLogCriteria(int page, int pageSize, UserChangeLogReq req);
+
+    Recommend getRByCreateBy(String userCode);
+
+    void deleteRecommend(Recommend recommend);
+
+    User getUserByWechatCode(String openid);
 }

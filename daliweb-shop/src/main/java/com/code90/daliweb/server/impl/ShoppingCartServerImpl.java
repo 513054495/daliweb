@@ -83,7 +83,7 @@ public class ShoppingCartServerImpl implements ShoppingCartServer {
     }
 
     @Override
-    public ShoppingCart getShoppingCartByCommodityIdAndcreateBy(String commodityId, String createBy,String specification) {
-        return shoppingCartService.getShoppingCartByCommodityIdAndcreateBy(commodityId,createBy,specification);
+    public ShoppingCart getShoppingCartByCommodityIdAndcreateBy(String commodityId, String createBy,String normId) {
+        return shoppingCartService.getShoppingCartByCommodityIdAndcreateBy(commodityId,createBy,normId);
     }
 }

@@ -11,7 +11,7 @@ public class OrderDetailSaveReq extends CommonRequest {
     private String commodityId;
     private int orderNum;
     private double money;
-    private String specification;
+    private String normId;
 
 
     public int getOrderNum() {
@@ -38,11 +38,11 @@ public class OrderDetailSaveReq extends CommonRequest {
         this.money = money;
     }
 
-    public String getSpecification() {
-        return specification;
+    public String getNormId() {
+        return normId;
     }
 
-    public void setSpecification(String specification) {
-        this.specification = specification;
+    public void setNormId(String normId) {
+        this.normId = normId;
     }
 }

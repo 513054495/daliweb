@@ -442,7 +442,7 @@ public class RegistrationController {
             }
             row = new ArrayList();
             row.add(registrationDetails.get(i).getName());
-            row.add(registrationDetails.get(i).getSex());
+            row.add(registrationDetails.get(i).getSex()==0?"女":"男");
             row.add(registrationDetails.get(i).getAge());
             row.add(registrationDetails.get(i).getPhone());
             row.add(registrationDetails.get(i).getOrderId());

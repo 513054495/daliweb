@@ -20,6 +20,8 @@ public class Recommend extends BaseDomain{
     private String id;
     //推荐帐号
     private String userCode;
+    //推荐关系类型(0-用户关系，1.未绑定关系）
+    private int type;
 
     public String getId() {
         return id;
@@ -35,5 +37,13 @@ public class Recommend extends BaseDomain{
 
     public void setUserCode(String userCode) {
         this.userCode = userCode;
+    }
+
+    public int getType() {
+        return type;
+    }
+
+    public void setType(int type) {
+        this.type = type;
     }
 }

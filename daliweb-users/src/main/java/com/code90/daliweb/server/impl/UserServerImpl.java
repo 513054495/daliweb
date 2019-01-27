@@ -332,4 +332,19 @@ public class UserServerImpl implements UserServer {
         return list;
     }
 
+    @Override
+    public Recommend getRByCreateBy(String userCode) {
+        return recommendService.getRByCreateBy(userCode);
+    }
+
+    @Override
+    public void deleteRecommend(Recommend recommend) {
+        recommendService.delete(recommend);
+    }
+
+    @Override
+    public User getUserByWechatCode(String openid) {
+        return userService.getUserByWechatCode(openid);
+    }
+
 }

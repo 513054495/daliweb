@@ -28,7 +28,7 @@ public class OrderDetail extends BaseDomain {
     //购买数量
     @Column
     private int orderNum;
-    //订单详情状态（0-正常，1-退款中，2-退款完成，3-退款失败）
+    //订单详情状态（0-正常，1-退款中，2-退款完成，3-退款失败,4-交易完成）
     @Column
     private int status;
     //退款理由
@@ -37,9 +37,9 @@ public class OrderDetail extends BaseDomain {
     //实际支付金额
     @Column
     private double money;
-    //规格
+    //规格编号
     @Column
-    private String specification;
+    private String normId;
 
     public String getOrderId() {
         return orderId;
@@ -96,11 +96,11 @@ public class OrderDetail extends BaseDomain {
         this.money = money;
     }
 
-    public String getSpecification() {
-        return specification;
+    public String getNormId() {
+        return normId;
     }
 
-    public void setSpecification(String specification) {
-        this.specification = specification;
+    public void setNormId(String normId) {
+        this.normId = normId;
     }
 }

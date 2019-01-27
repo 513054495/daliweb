@@ -74,7 +74,10 @@ public class ShopScheduling {
                 List<OrderDetail> orderDetails1=orderDetailServer.getOrderDetailByOrderId(orders.getId());
                 for(OrderDetail orderDetail : orderDetails1){
                     if(orderDetail.getStatus()!=2){
+                        orderDetail.setStatus(4);
+                        orderDetailServer.save(orderDetail);
                         Commodity commodity = (Commodity) commodityServer.getObjectById(orderDetail.getCommodityId());
+                        CommodityNorm commodityNorm=commodityServer.getCommodityNormById(orderDetail.getNormId());
                         if(commodity.getIsVip()==1) {
                             User user = userServer.getUserByUserCode(orders.createBy);
                             user.setUserType(1);
@@ -85,7 +88,7 @@ public class ShopScheduling {
                             userServer.saveUserChangeLog(userChangeLog);
                         }
                         if(rules.getType()==0) {
-                            money += orderDetail.getOrderNum() * commodity.getPrice();
+                            money += orderDetail.getOrderNum() * commodityNorm.getPrice();
                         }else{
                             money += orderDetail.getMoney();
                         }
@@ -124,8 +127,8 @@ public class ShopScheduling {
                 }
                 List<OrderDetail> orderDetails=orderDetailServer.getOrderDetailByOrderId(orders.getId());
                 for (OrderDetail orderDetail : orderDetails){
-                    int num=redisServer.getNum(orderDetail.getCommodityId());
-                    redisServer.setValue(orderDetail.getCommodityId(),(num+orderDetail.getOrderNum())+"");
+                    int num=redisServer.getNum(orderDetail.getNormId());
+                    redisServer.setValue(orderDetail.getNormId(),(num+orderDetail.getOrderNum())+"");
                 }
             }
         }

@@ -34,5 +34,5 @@ public interface LearnContentServer extends BaseServer {
      * @param id
      * @return 获取学习内容
      */
-    LearnContent getLearnContentByTopicId(String id);
+    List<LearnContent> getLearnContentByTopicId(String id);
 }

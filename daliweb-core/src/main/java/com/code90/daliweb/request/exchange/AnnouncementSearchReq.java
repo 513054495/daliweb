@@ -18,6 +18,7 @@ public class AnnouncementSearchReq extends CommonRequest implements Serializable
     private int status;
     private String startTime;
     private String endTime;
+    private int type;
 
     public int getPage() {
         return page;
@@ -74,5 +75,13 @@ public class AnnouncementSearchReq extends CommonRequest implements Serializable
 
     public void setLevel(String level) {
         this.level = level;
+    }
+
+    public int getType() {
+        return type;
+    }
+
+    public void setType(int type) {
+        this.type = type;
     }
 }

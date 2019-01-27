@@ -96,7 +96,8 @@ public class ExamServerImpl implements ExamServer {
 
     @Override
     public List<Exam> getAll() {
-        return examService.findAll();
+        Sort sort = new Sort(Sort.Direction.DESC, "createTime");
+        return examService.findAll(sort);
     }
 
 }

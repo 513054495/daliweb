@@ -1,5 +1,6 @@
 package com.code90.daliweb.service;
 
+import com.code90.daliweb.domain.Proxy;
 import com.code90.daliweb.domain.ProxyDetail;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;

@@ -28,4 +28,5 @@
     <dubbo:service interface="com.code90.daliweb.server.LeaveMessageServer" ref="leaveMessageServer" />
     <dubbo:service interface="com.code90.daliweb.server.AnnouncementServer" ref="announcementServer" />
     <dubbo:service interface="com.code90.daliweb.server.ForumServer" ref="forumServer" />
+    <dubbo:service interface="com.code90.daliweb.server.SinologyDynamicServer" ref="sinologyDynamicServer" />
 </beans>

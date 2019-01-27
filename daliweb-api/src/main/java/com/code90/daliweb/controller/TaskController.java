@@ -286,6 +286,31 @@ public class TaskController{
         }
     }
 
+
+    /**
+     * 根据用户帐号获取任务列表
+     * @param userCode 用户帐号
+     * @param id 任务编号
+     * @return 考试列表
+     */
+    @RequestMapping(value="/getTaskConllectionByUserCodeAndTaskId",method=RequestMethod.GET)
+    public CommonResponse getTaskConllectionByUserCodeAndTaskId(@RequestParam("id")String id,@RequestParam("userCode")String userCode){
+        try{
+             CommonResponse response=new CommonResponse("获取成功");
+             Task task= (Task) taskServer.getObjectById(id);
+             TaskCollection taskCollection=taskCollectionServer.getAllByTaskIdAndCreateBy(id,userCode);
+             logger.info("获取成功");
+             response.addNewDate("info",taskCollection);
+             response.addNewDate("title",task.getTitle());
+             response.addNewDate("lastTime",task.getLastTime());
+             response.addNewDate("maxNum",task.getMaxNum());
+             return response;
+        }catch (Exception e){
+            logger.error("获取失败，原因："+e.getMessage());
+            return new CommonResponse("获取失败",4,e);
+        }
+    }
+
     /**
      * 删除任务
      * @param ids 任务编号

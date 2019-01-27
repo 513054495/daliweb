@@ -15,6 +15,6 @@ import java.util.List;
 public interface AnnouncementService extends JpaRepository<Announcement,Integer>,JpaSpecificationExecutor<Announcement> {
     @Query("select a from Announcement a where a.id=?1")
     Announcement getAnnouncementById(String id);
-    @Query("select a from Announcement a where a.status<>0")
+    @Query("select a from Announcement a where a.status<>0 order by a.createTime desc")
     List<Announcement> getStartAnnouncement();
 }

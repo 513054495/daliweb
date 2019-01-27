@@ -44,4 +44,5 @@
     <dubbo:reference interface="com.code90.daliweb.server.LeaveMessageServer" id="leaveMessageServer" retries="2" timeout="5000" cluster="failfast"></dubbo:reference>
     <dubbo:reference interface="com.code90.daliweb.server.AnnouncementServer" id="announcementServer" retries="2" timeout="5000" cluster="failfast"></dubbo:reference>
     <dubbo:reference interface="com.code90.daliweb.server.ForumServer" id="forumServer" retries="2" timeout="5000" cluster="failfast"></dubbo:reference>
+    <dubbo:reference interface="com.code90.daliweb.server.SinologyDynamicServer" id="sinologyDynamicServer" retries="2" timeout="5000" cluster="failfast"></dubbo:reference>
 </beans>

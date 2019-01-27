@@ -8,9 +8,7 @@ import com.alipay.api.DefaultAlipayClient;
 import com.alipay.api.request.AlipayTradeRefundRequest;
 import com.alipay.api.request.AlipayTradeWapPayRequest;
 import com.alipay.api.response.AlipayTradeRefundResponse;
-import com.code90.daliweb.conf.MyWxPayUtil;
-import com.code90.daliweb.conf.RedisServer;
-import com.code90.daliweb.conf.WXPayClient;
+import com.code90.daliweb.conf.*;
 import com.code90.daliweb.server.*;
 import com.code90.daliweb.utils.HttpUtil;
 import com.code90.daliweb.domain.*;
@@ -61,6 +59,8 @@ public class OrdersController {
     @Autowired
     private RegistrationServer registrationServer;
     @Autowired
+    private RuleServer ruleServer;
+    @Autowired
     private RedisServer redisServer;
     @Autowired
     private WXPay wxPay;
@@ -82,7 +82,6 @@ public class OrdersController {
     private String notify_url;
     @Value("${spring.profiles.active}")
     private String payDev;
-
 
     /**
      * 订单校验
@@ -150,10 +149,10 @@ public class OrdersController {
                     BeanUtils.copyProperties(orderDetailSaveReq, orderDetail);
                     orderDetail.setOrderId(order.getId());
                     orderDetailServer.save(orderDetail);
-                    int num=redisServer.getNum(orderDetail.getCommodityId());
-                    redisServer.setValue(orderDetail.getCommodityId(),(num-orderDetail.getOrderNum())+"");
+                    int num=redisServer.getNum(orderDetail.getNormId());
+                    redisServer.setValue(orderDetail.getNormId(),(num-orderDetail.getOrderNum())+"");
                     if (req.getIsShoppingCart() != 0) {
-                        ShoppingCart shoppingCart = shoppingCartServer.getShoppingCartByCommodityIdAndcreateBy(orderDetail.getCommodityId(), order.createBy ,orderDetail.getSpecification() );
+                        ShoppingCart shoppingCart = shoppingCartServer.getShoppingCartByCommodityIdAndcreateBy(orderDetail.getCommodityId(), order.createBy ,orderDetail.getNormId() );
                         int count = shoppingCart.getNum() - orderDetail.getOrderNum();
                         if (count > 0) {
                             shoppingCart.setNum(count);
@@ -166,8 +165,8 @@ public class OrdersController {
                 logger.info("保存成功");
                 return new CommonResponse("保存成功", "orderId", id);
             }else{
-                logger.error("订单提交失败，库存失败");
-                return new CommonResponse("订单提交失败，库存失败", 1);
+                logger.error("订单提交失败，库存不足");
+                return new CommonResponse("订单提交失败，库存不足", 1);
             }
         } catch (Exception e) {
             logger.error("保存失败，原因：" + e.getMessage());
@@ -178,7 +177,7 @@ public class OrdersController {
     private boolean vaildOrder(List<OrderDetailSaveReq> list){
         boolean flag=true;
         for(OrderDetailSaveReq orderDetailSaveReq : list){
-            int num=redisServer.getNum(orderDetailSaveReq.getCommodityId());
+            int num=redisServer.getNum(orderDetailSaveReq.getNormId());
             if(num-orderDetailSaveReq.getOrderNum()<0){
                 flag=false;
                 return flag;
@@ -233,7 +232,30 @@ public class OrdersController {
                         orders.setShipNo(shipNo);
                     }
                     if(status==2){
-                        calcProxyDetail(orders);
+                        Rules rules= (Rules) ruleServer.getObjectById(1+"");
+                        double money =0;
+                        List<OrderDetail> orderDetails1=orderDetailServer.getOrderDetailByOrderId(orders.getId());
+                        for(OrderDetail orderDetail : orderDetails1){
+                            if(orderDetail.getStatus()!=2){
+                                Commodity commodity= (Commodity) commodityServer.getObjectById(orderDetail.getCommodityId());
+                                if(commodity.getIsProxy()==1){
+                                    calcProxyDetail(orders);
+                                }
+                                CommodityNorm commodityNorm = commodityServer.getCommodityNormById(orderDetail.getNormId());
+                                if(rules.getType()==0) {
+                                    money += orderDetail.getOrderNum() * commodityNorm.getPrice();
+                                }else{
+                                    money += orderDetail.getMoney();
+                                }
+                            }
+                        }
+                        List<ProxyDetail> proxyDetails=proxyServer.getProxyDetailByOrderId(orders.getId());
+                        for (ProxyDetail proxyDetail : proxyDetails){
+                            Proxy proxy=proxyServer.getProxyByUserCode(proxyDetail.createBy);
+                            proxyDetail.setOrderPostalCode(orders.getOrderPostalCode());
+                            proxyDetail.setMoney(calcProxyMoney(proxy.getType(),money,rules,proxyDetail.getType()));
+                            proxyServer.saveProxyDetail(proxyDetail);
+                        }
                     }
                     if(status==6){
                         if(orders.getDeductionMonry()!=0) {
@@ -246,8 +268,9 @@ public class OrdersController {
                         }
                         List<OrderDetail> orderDetails=orderDetailServer.getOrderDetailByOrderId(orders.getId());
                         for (OrderDetail orderDetail : orderDetails){
-                            int num = redisServer.getNum(orderDetail.getCommodityId());
-                            redisServer.setValue(orderDetail.getCommodityId(),(num+orderDetail.getOrderNum())+"");
+                            CommodityNorm commodityNorm = commodityServer.getCommodityNormById(orderDetail.getNormId());
+                            int num = redisServer.getNum(commodityNorm.getId());
+                            redisServer.setValue(commodityNorm.getId(),(num+orderDetail.getOrderNum())+"");
                         }
                     }
                     orderServer.save(orders);
@@ -367,7 +390,7 @@ public class OrdersController {
                         commodityVo.setStatus(orderDetail.getStatus());
                         commodityVo.setDetailId(orderDetail.getId());
                         commodityVo.setRefundReason(orderDetail.getRefundReason());
-                        commodityVo.setSpecification(orderDetail.getSpecification());
+                        commodityVo.getCommodityNorms().add(commodityServer.getCommodityNormById(orderDetail.getNormId()));
                         ordersVo.getOrderCommodities().add(commodityVo);
                     }
                     ordersVos.add(ordersVo);
@@ -478,7 +501,7 @@ public class OrdersController {
                 commodityVo.setStatus(orderDetail.getStatus());
                 commodityVo.setDetailId(orderDetail.getId());
                 commodityVo.setRefundReason(orderDetail.getRefundReason());
-                commodityVo.setSpecification(orderDetail.getSpecification());
+                commodityVo.getCommodityNorms().add(commodityServer.getCommodityNormById(orderDetail.getNormId()));
                 ordersVo.getOrderCommodities().add(commodityVo);
                 if (orderDetail.getStatus() == 1) {
                     ordersVo.setIsRefund(1);
@@ -507,14 +530,14 @@ public class OrdersController {
         for (Orders orders : allOrders) {
             List<OrderDetail> orderDetails = orderDetailServer.getOrderDetailByOrderId(orders.getId());
             for (OrderDetail orderDetail : orderDetails) {
-                if (orderDetail.getStatus() != status) {
+                if (orderDetail.getStatus() != status && orderDetail.getStatus()!=4) {
                     Commodity commodity = commodityServer.getCommodityAndDeleteById(orderDetail.getCommodityId());
                     CommodityVo commodityVo = new CommodityVo();
                     BeanUtils.copyProperties(commodity, commodityVo);
                     commodityVo.setStatus(orderDetail.getStatus());
                     commodityVo.setOrderNum(orderDetail.getOrderNum());
                     commodityVo.setDetailId(orderDetail.getId());
-                    commodityVo.setSpecification(orderDetail.getSpecification());
+                    commodityVo.getCommodityNorms().add(commodityServer.getCommodityNormById(orderDetail.getNormId()));
                     commodityVo.setRefundReason(orderDetail.getRefundReason());
                     commodityVo.createBy = orderDetail.createBy;
                     commodityVo.createTime = orderDetail.createTime;
@@ -548,7 +571,7 @@ public class OrdersController {
         commodityVo.lastmodifiedBy = orderDetail.lastmodifiedBy;
         commodityVo.modifyTime = orderDetail.modifyTime;
         commodityVo.setMoney(orderDetail.getMoney());
-        commodityVo.setSpecification(orderDetail.getSpecification());
+        commodityVo.getCommodityNorms().add(commodityServer.getCommodityNormById(orderDetail.getNormId()));
         return new CommonResponse("获取成功", "info", commodityVo);
     }
 
@@ -596,7 +619,7 @@ public class OrdersController {
                         BeanUtils.copyProperties(commodity, commodityVo);
                         commodityVo.setOrderNum(orderDetail.getOrderNum());
                         commodityVo.setStatus(orderDetail.getStatus());
-                        commodityVo.setSpecification(orderDetail.getSpecification());
+                        commodityVo.getCommodityNorms().add(commodityServer.getCommodityNormById(orderDetail.getNormId()));
                         ordersVo.getOrderCommodities().add(commodityVo);
                     }
                     ordersVos.add(ordersVo);
@@ -627,13 +650,13 @@ public class OrdersController {
                                     ";商品数量：" + orderCommodities.get(j).getOrderNum() + ";" +
                                     "商品类型：" + changeName(orderCommodities.get(j).getType(),3) + ";" +
                                     "商品状态：" + changeName(orderCommodities.get(j).getStatus(),2) + ";" +
-                                    "商品规格"+ orderCommodities.get(j).getSpecification()+"\r\n";
+                                    "商品规格"+ orderCommodities.get(j).getCommodityNorms()+"\r\n";
                 } else {
                     commodityList += "商品编号：" + orderCommodities.get(j).getId() + ";商品名称：" + orderCommodities.get(j).getName() +
                                      ";商品数量：" + orderCommodities.get(j).getOrderNum() + ";" +
                                       "商品类型：" + changeName(orderCommodities.get(j).getType(),3) + ";" +
                                       "商品状态：" + changeName(orderCommodities.get(j).getStatus(),2) + ";"+
-                                      "商品规格:"+ orderCommodities.get(j).getSpecification()+";";
+                                      "商品规格:"+ orderCommodities.get(j).getCommodityNorms()+";";
                 }
             }
             row.add(commodityList);
@@ -972,12 +995,24 @@ public class OrdersController {
             orders.setPayTime(new Date());
             orders.setPayNo(trade_no);
             List<OrderDetail> orderDetails=orderDetailServer.getOrderDetailByOrderId(orders.getId());
+            boolean flag=false;
+            double money =0;
+            Rules rules= (Rules) ruleServer.getObjectById(1+"");
             for (OrderDetail orderDetail : orderDetails){
                 Commodity commodity= (Commodity) commodityServer.getObjectById(orderDetail.getCommodityId());
+                CommodityNorm commodityNorm=commodityServer.getCommodityNormById(orderDetail.getNormId());
                 if(commodity.getType()==0){
                     orders.setStatus(1);
                 }else if(commodity.getType()==1){
+                    orderDetail.setStatus(4);
+                    orderDetailServer.save(orderDetail);
                     orders.setStatus(5);
+                    flag=true;
+                    if(rules.getType()==0) {
+                        money += orderDetail.getOrderNum() * commodityNorm.getPrice();
+                    }else{
+                        money += orderDetail.getMoney();
+                    }
                     if(commodity.getIsVip()==1&&commodity.getStatus()!=2) {
                         User user = userServer.getUserByUserCode(orders.createBy);
                         user.setUserType(1);
@@ -988,7 +1023,17 @@ public class OrdersController {
                         userServer.saveUserChangeLog(userChangeLog);
                     }
                 }
-                break;
+            }
+            if(flag){
+                calcProxyDetail(orders);
+                List<ProxyDetail> proxyDetails=proxyServer.getProxyDetailByOrderId(orders.getId());
+                for (ProxyDetail proxyDetail : proxyDetails){
+                    Proxy proxy=proxyServer.getProxyByUserCode(proxyDetail.createBy);
+                    proxyDetail.setStatus(1);
+                    proxyDetail.setOrderPostalCode(orders.getOrderPostalCode());
+                    proxyDetail.setMoney(calcProxyMoney(proxy.getType(),money,rules,proxyDetail.getType()));
+                    proxyServer.saveProxyDetail(proxyDetail);
+                }
             }
             orderServer.save(orders);
         }else if(null!=registrationDetail){
@@ -1180,11 +1225,17 @@ public class OrdersController {
                     orders.setPayType(1);
                     orders.setPayNo(notifyMap.get("transaction_id"));
                     List<OrderDetail> orderDetails=orderDetailServer.getOrderDetailByOrderId(orders.getId());
+                    boolean flag=false;
+                    double money =0;
+                    Rules rules= (Rules) ruleServer.getObjectById(1+"");
                     for (OrderDetail orderDetail : orderDetails){
                         Commodity commodity= (Commodity) commodityServer.getObjectById(orderDetail.getCommodityId());
+                        CommodityNorm commodityNorm=commodityServer.getCommodityNormById(orderDetail.getNormId());
                         if(commodity.getType()==0){
                             orders.setStatus(1);
                         }else if(commodity.getType()==1){
+                            orderDetail.setStatus(4);
+                            orderDetailServer.save(orderDetail);
                             orders.setStatus(5);
                             if(commodity.getIsVip()==1&&commodity.getStatus()!=2) {
                                 User user = userServer.getUserByUserCode(orders.createBy);
@@ -1195,8 +1246,25 @@ public class OrdersController {
                                 userChangeLog.createBy=orders.createBy;
                                 userServer.saveUserChangeLog(userChangeLog);
                             }
+                            flag=true;
+                            if(rules.getType()==0) {
+                                money += orderDetail.getOrderNum() * commodityNorm.getPrice();
+                            }else{
+                                money += orderDetail.getMoney();
+                            }
                         }
-                        break;
+                    }
+                    if(flag){
+                        calcProxyDetail(orders);
+                        List<ProxyDetail> proxyDetails=proxyServer.getProxyDetailByOrderId(orders.getId());
+                        for (ProxyDetail proxyDetail : proxyDetails){
+                            Proxy proxy=proxyServer.getProxyByUserCode(proxyDetail.createBy);
+                            proxyDetail.setStatus(1);
+                            proxyDetail.setOrderPostalCode(orders.getOrderPostalCode());
+                            logger.error("--------------------------->>>>"+money);
+                            proxyDetail.setMoney(calcProxyMoney(proxy.getType(),money,rules,proxyDetail.getType()));
+                            proxyServer.saveProxyDetail(proxyDetail);
+                        }
                     }
                     orderServer.save(orders);
                 }else if(null!=registrationDetail){
@@ -1248,11 +1316,59 @@ public class OrdersController {
         Map<String, String> requstInfoMap = wxPayClient.decodeRefundNotify(request);
     }
 
-   /* @RequestMapping(value = "/testCalc",method = RequestMethod.GET)
-    public void testCalc(@RequestParam("id")String id) throws Exception {
-        Orders orders= (Orders) orderServer.getObjectById(id);
-        calcProxyDetail(orders);
-    }*/
+    @RequestMapping(value = "/share", method = RequestMethod.GET)
+    public CommonResponse share(@RequestParam("url")String url) {
+        WinXinEntity winXinEntity=WxShareUtil.getWinXinEntity(url);
+        CommonResponse response=new CommonResponse("获取成功","info",winXinEntity);
+        response.addNewDate("url",url);
+        return response;
+    }
+
+
+    @RequestMapping(value = "/wxlogin", method = RequestMethod.GET)
+    @ResponseBody
+    public CommonResponse wxlogin(String code) {
+        try {
+            //页面获取openId接口
+            String getopenid_url = "https://api.weixin.qq.com/sns/oauth2/access_token";
+            String param = "appid=wx8ca5f07c892b9380&secret=08b108a6e1cedd0b59ec90c0cbbaf911" + "&code=" + code + "&grant_type=authorization_code";
+            //向微信服务器发送get请求获取openIdStr
+            String asccessTokenStr = HttpUtil.sendGet(getopenid_url, param);
+            logger.info("------------------->>"+asccessTokenStr);
+            JSONObject jsonObject =JSONObject.parseObject(asccessTokenStr);
+            String asccessToken=jsonObject.getString("access_token");
+            String openid=jsonObject.getString("openid");
+            getopenid_url="https://api.weixin.qq.com/sns/auth";
+            param="access_token="+asccessToken+"&openid="+openid;
+            String result=HttpUtil.sendGet(getopenid_url,param);
+            logger.info("------------------->>"+result);
+            jsonObject =JSONObject.parseObject(result);
+            String errmsg=jsonObject.getString("errmsg");
+            if("ok".equals(errmsg)){
+                User user=userServer.getUserByWechatCode(openid);
+
+                CommonResponse response=new CommonResponse("获取成功");
+                if(null==user){
+                    logger.info("获取成功,没有注册");
+                    response.addNewDate("openId",openid);
+                    response.addNewDate("isRegister",false);
+                }else{
+                    logger.info("获取成功,已注册，注册用户帐号："+user.getUserCode());
+                    response.addNewDate("openId",openid);
+                    response.addNewDate("isRegister",true);
+                    response.addNewDate("info",user);
+                }
+                return response;
+            }else{
+                logger.error("获取失败");
+                return new CommonResponse("获取失败,微信授权失败",10);
+            }
+
+        } catch (Exception e) {
+            logger.error("获取失败",e.getMessage());
+            return new CommonResponse("获取失败",7,e);
+        }
+    }
 
     private void calcProxyDetail(Orders orders) {
         String orderUserCode=orders.getCreateBy();
@@ -1338,5 +1454,57 @@ public class OrdersController {
         }else{
             return null;
         }
+    }
+
+    private double calcProxyMoney(int type, double orderMoney,Rules rules,int proxyType) {
+        double money=0;
+        switch(type){
+            case 1:
+                if(proxyType==0) {
+                    money = orderMoney * rules.getCountryPromotionNum() / 100;
+                }else{
+                    money = orderMoney * rules.getCountryNum()/100;
+                }
+                break;
+            case 2:
+                if(proxyType==0) {
+                    money=orderMoney*rules.getProvincePromotionNum()/100;
+                }else{
+                    money = orderMoney * rules.getProvinceNum()/100;
+                }
+                break;
+            case 3:
+                if(proxyType==0) {
+                    money = orderMoney * rules.getCityPromotionNum() / 100;
+                }else{
+                    money = orderMoney*rules.getCityNum()/100;
+                }
+                break;
+            case 4:
+                if(proxyType==0) {
+                    money = orderMoney * rules.getCountyPromotionNum() / 100;
+                }else{
+                    money=orderMoney*rules.getCountyNum()/100;
+                }
+                break;
+            case 5:
+                money=orderMoney*rules.getSchoolNum()/100;
+                break;
+            case 6:
+                money=orderMoney*rules.getHuawenNum()/100;
+                break;
+            case 7:
+                money=orderMoney*rules.getGuyunNum()/100;
+                break;
+            case 8:
+                money=orderMoney*rules.getXunguNum()/100;
+                break;
+        }
+        return money;
+    }
+
+    public static void main(String[] args){
+        String str="1001"+"jdkodfvdss324fjKd43545sZkxOP98icjxzlc";
+        System.out.println(MD5Util.getMD5String(str));
     }
 }

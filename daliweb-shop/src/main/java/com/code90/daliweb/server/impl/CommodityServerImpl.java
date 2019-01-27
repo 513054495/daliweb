@@ -1,9 +1,13 @@
 package com.code90.daliweb.server.impl;
 
 import com.code90.daliweb.domain.Commodity;
+import com.code90.daliweb.domain.CommodityNorm;
+import com.code90.daliweb.domain.CommodityType;
 import com.code90.daliweb.request.shop.CommoditySearchReq;
 import com.code90.daliweb.server.CommodityServer;
+import com.code90.daliweb.service.CommodityNormService;
 import com.code90.daliweb.service.CommodityService;
+import com.code90.daliweb.service.CommodityTypeService;
 import com.code90.daliweb.utils.StringUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -30,6 +34,10 @@ import java.util.List;
 public class CommodityServerImpl implements CommodityServer {
     @Autowired
     private CommodityService commodityService;
+    @Autowired
+    private CommodityTypeService commodityTypeService;
+    @Autowired
+    private CommodityNormService commodityNormService;
 
     @Override
     public void save(Object commodity) {
@@ -53,7 +61,7 @@ public class CommodityServerImpl implements CommodityServer {
 
     @Override
     public List<Commodity> findCommodityCriteria(Integer page, Integer size, CommoditySearchReq req) {
-        Pageable pageable = new PageRequest(page, size, Sort.Direction.DESC, "id");
+        Pageable pageable = new PageRequest(page, size, Sort.Direction.DESC,  "level");
         Page<Commodity> commodities = commodityService.findAll(new Specification<Commodity>(){
             @Override
             public Predicate toPredicate(Root<Commodity> root, CriteriaQuery<?> query, CriteriaBuilder criteriaBuilder) {
@@ -111,5 +119,65 @@ public class CommodityServerImpl implements CommodityServer {
     @Override
     public List<Commodity> getAllCommodity() {
         return commodityService.findAll();
+    }
+
+    @Override
+    public int getMaxCommodityTypeId() {
+        List<CommodityType> commodityTypes=commodityTypeService.findAll();
+        if(commodityTypes.size()==0){
+            return 0;
+        }else{
+            return commodityTypeService.getMaxCommodityTypeId();
+        }
+    }
+
+    @Override
+    public void saveCommodityType(CommodityType commodityType) {
+        commodityTypeService.save(commodityType);
+    }
+
+    @Override
+    public CommodityType getCommodityTypeById(int id) {
+        return commodityTypeService.getCommodityTypeById(id);
+    }
+
+    @Override
+    public void delCommodityType(CommodityType commodityType) {
+        commodityTypeService.delete(commodityType);
+    }
+
+    @Override
+    public List<CommodityType> getChildTypeByParentId(int id) {
+        return commodityTypeService.getChildTypeByParentId(id);
+    }
+
+    @Override
+    public List<CommodityType> getRootCommodityType() {
+        return commodityTypeService.getRootCommodityType();
+    }
+
+    @Override
+    public void saveCommodityNorms(CommodityNorm commodityNorm) {
+        commodityNormService.save(commodityNorm);
+    }
+
+    @Override
+    public List<CommodityNorm> getCommodityNormByCommodityId(String id) {
+        return commodityNormService.getCommodityNormByCommodityId(id);
+    }
+
+    @Override
+    public void delCommodityNorm(CommodityNorm commodityNorm) {
+        commodityNormService.delete(commodityNorm);
+    }
+
+    @Override
+    public CommodityNorm getCommodityNormById(String normId) {
+        return commodityNormService.getCommodityNormById(normId);
+    }
+
+    @Override
+    public int getMaxLevel() {
+        return commodityService.getMaxLevel();
     }
 }

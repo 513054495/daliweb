@@ -35,4 +35,6 @@ public interface WorkServer  extends BaseServer{
      * @return 作业列表
      */
     List<Work> getPublishWorks();
+
+    List<Work> getAllWork();
 }

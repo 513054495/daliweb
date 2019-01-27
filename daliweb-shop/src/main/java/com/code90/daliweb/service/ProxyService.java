@@ -21,4 +21,6 @@ public interface ProxyService extends JpaRepository<Proxy,Integer>,JpaSpecificat
     List<Proxy> getProxiesByType(int i);
     @Query("select p from Proxy p where p.status=0")
     List<Proxy> getProxyList();
+    @Query("select p from Proxy p where p.createBy=?1 order by p.createTime desc")
+    Proxy getAllProxyByUserCode(String userCode);
 }

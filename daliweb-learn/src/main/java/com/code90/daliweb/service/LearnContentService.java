@@ -5,6 +5,8 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
 
+import java.util.List;
+
 /**
  * 学习内容数据库操作接口
  * @author Ray Lin
@@ -16,5 +18,5 @@ public interface LearnContentService extends JpaRepository<LearnContent,Integer>
     @Query("select max(l.level) from LearnContent l ")
     int getMaxLevel();
     @Query("select l from LearnContent l where l.topicId=?1")
-    LearnContent getLearnContentByTopicId(String id);
+    List<LearnContent> getLearnContentByTopicId(String id);
 }

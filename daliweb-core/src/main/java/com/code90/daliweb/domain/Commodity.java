@@ -20,12 +20,6 @@ public class Commodity extends BaseDomain {
     //商品类型（0.普通商品，1.虚拟商品）
     @Column
     private int type;
-    //商品总数
-    @Column
-    private int totalNum;
-    //商品单价
-    @Column
-    private double price;
     //商品图片
     @Column
     @Lob
@@ -41,19 +35,44 @@ public class Commodity extends BaseDomain {
     //是否购买升VIP用户（0.否，1.是）
     @Column
     private int isVip;
-    //红包抵扣比例
-    @Column
-    private double deduction;
     //商品状态(0.下架，1.上架)
     @Column
     private int status;
     //是否删除
     @Column
     private int deleted;
-    //规格列表
+    //虚拟销量
+    @Column
+    private int sham;
+    //商品分类
+    @Column
+    private int typeId;
+    //是否分销(0-不，1-是)
+    @Column
+    private int isProxy;
+    //视频类型
+    @Column
+    private int videoType;
+    //视频文件路径
     @Column
     @Lob
-    private String specificationList;
+    private String videoFileUrl;
+    //外部视频连接
+    @Column
+    private String videoUrl;
+    //封面图路径
+    @Column
+    private String coverImgUrl;
+    //商品内容
+    @Column
+    @Lob
+    private String content;
+    //是否置顶(0.否，1.是)
+    @Column
+    private int isTop;
+    //商品等级(数字越大，排得越前)
+    @Column
+    private int level;
 
     public int getStatus() {
         return status;
@@ -63,13 +82,6 @@ public class Commodity extends BaseDomain {
         this.status = status;
     }
 
-    public double getDeduction() {
-        return deduction;
-    }
-
-    public void setDeduction(double deduction) {
-        this.deduction = deduction;
-    }
 
     public int getIsVip() {
         return isVip;
@@ -93,22 +105,6 @@ public class Commodity extends BaseDomain {
 
     public void setPic(String pic) {
         this.pic = pic;
-    }
-
-    public double getPrice() {
-        return price;
-    }
-
-    public void setPrice(double price) {
-        this.price = price;
-    }
-
-    public int getTotalNum() {
-        return totalNum;
-    }
-
-    public void setTotalNum(int totalNum) {
-        this.totalNum = totalNum;
     }
 
     public int getType() {
@@ -151,11 +147,83 @@ public class Commodity extends BaseDomain {
         this.deleted = deleted;
     }
 
-    public String getSpecificationList() {
-        return specificationList;
+    public int getSham() {
+        return sham;
     }
 
-    public void setSpecificationList(String specificationList) {
-        this.specificationList = specificationList;
+    public void setSham(int sham) {
+        this.sham = sham;
+    }
+
+    public int getTypeId() {
+        return typeId;
+    }
+
+    public void setTypeId(int typeId) {
+        this.typeId = typeId;
+    }
+
+    public int getIsProxy() {
+        return isProxy;
+    }
+
+    public void setIsProxy(int isProxy) {
+        this.isProxy = isProxy;
+    }
+
+    public int getVideoType() {
+        return videoType;
+    }
+
+    public void setVideoType(int videoType) {
+        this.videoType = videoType;
+    }
+
+    public String getVideoFileUrl() {
+        return videoFileUrl;
+    }
+
+    public void setVideoFileUrl(String videoFileUrl) {
+        this.videoFileUrl = videoFileUrl;
+    }
+
+    public String getVideoUrl() {
+        return videoUrl;
+    }
+
+    public void setVideoUrl(String videoUrl) {
+        this.videoUrl = videoUrl;
+    }
+
+    public String getCoverImgUrl() {
+        return coverImgUrl;
+    }
+
+    public void setCoverImgUrl(String coverImgUrl) {
+        this.coverImgUrl = coverImgUrl;
+    }
+
+    public String getContent() {
+        return content;
+    }
+
+    public void setContent(String content) {
+        this.content = content;
+    }
+
+    public int getLevel() {
+        return level;
+    }
+
+    public void setLevel(int level) {
+        this.level = level;
+    }
+
+    public int getIsTop() {
+        return isTop;
+    }
+
+    public void setIsTop(int isTop) {
+        this.isTop = isTop;
     }
 }

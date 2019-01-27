@@ -103,4 +103,9 @@ public class WorkServerImpl implements WorkServer {
         List<Work> works=workService.getPublishWorks();
         return works;
     }
+
+    @Override
+    public List<Work> getAllWork() {
+        return workService.findAll();
+    }
 }

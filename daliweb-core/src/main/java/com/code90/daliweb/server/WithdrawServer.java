@@ -57,4 +57,10 @@ public interface WithdrawServer extends BaseServer {
      */
     List<Object[]> getWithdrawByYear(int status);
 
+    /**
+     * 根据用户获取未成功提现
+     * @param createBy
+     * @return 未成功提现
+     */
+    Withdraw getNotSuccessWithdrawByUserCode(String createBy);
 }

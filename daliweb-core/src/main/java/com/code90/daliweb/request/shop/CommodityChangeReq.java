@@ -1,8 +1,11 @@
 package com.code90.daliweb.request.shop;
 
+import com.code90.daliweb.domain.CommodityNorm;
 import com.code90.daliweb.request.CommonRequest;
 
 import javax.persistence.Column;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * 商品修改请求类
@@ -22,6 +25,15 @@ public class CommodityChangeReq extends CommonRequest {
     private double deduction;
     private int status;
     private String specificationList;
+    private int sham;
+    private int typeId;
+    private int isProxy;
+    private int videoType;
+    private String videoFileUrl;
+    private String videoUrl;
+    private String coverImgUrl;
+    private String content;
+    private List<CommodityNorm> commodityNorms=new ArrayList<>();
 
     public String getName() {
         return name;
@@ -117,5 +129,77 @@ public class CommodityChangeReq extends CommonRequest {
 
     public void setSpecificationList(String specificationList) {
         this.specificationList = specificationList;
+    }
+
+    public int getSham() {
+        return sham;
+    }
+
+    public void setSham(int sham) {
+        this.sham = sham;
+    }
+
+    public int getTypeId() {
+        return typeId;
+    }
+
+    public void setTypeId(int typeId) {
+        this.typeId = typeId;
+    }
+
+    public int getIsProxy() {
+        return isProxy;
+    }
+
+    public void setIsProxy(int isProxy) {
+        this.isProxy = isProxy;
+    }
+
+    public int getVideoType() {
+        return videoType;
+    }
+
+    public void setVideoType(int videoType) {
+        this.videoType = videoType;
+    }
+
+    public String getVideoFileUrl() {
+        return videoFileUrl;
+    }
+
+    public void setVideoFileUrl(String videoFileUrl) {
+        this.videoFileUrl = videoFileUrl;
+    }
+
+    public String getVideoUrl() {
+        return videoUrl;
+    }
+
+    public void setVideoUrl(String videoUrl) {
+        this.videoUrl = videoUrl;
+    }
+
+    public String getCoverImgUrl() {
+        return coverImgUrl;
+    }
+
+    public void setCoverImgUrl(String coverImgUrl) {
+        this.coverImgUrl = coverImgUrl;
+    }
+
+    public List<CommodityNorm> getCommodityNorms() {
+        return commodityNorms;
+    }
+
+    public void setCommodityNorms(List<CommodityNorm> commodityNorms) {
+        this.commodityNorms = commodityNorms;
+    }
+
+    public String getContent() {
+        return content;
+    }
+
+    public void setContent(String content) {
+        this.content = content;
     }
 }

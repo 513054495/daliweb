@@ -88,13 +88,19 @@ public class HomeController {
     @RequestMapping(value = "/getLiquidity",method = RequestMethod.GET)
     public CommonResponse getLiquidity(){
         CommonResponse response=new CommonResponse("获取成功");
+        NumberFormat nf=NumberFormat.getNumberInstance() ;
+        nf.setMaximumFractionDigits(2);
         List<Object[]> list=ordersServer.getSalesByYear();
         if(null!=list){
             String[] salesMonths=new String[list.size()];
             String[] sales=new String[list.size()];
             for(int i=0;i<list.size();i++){
                 salesMonths[i]=list.get(i)[0].toString();
-                sales[i]=list.get(i)[1].toString();
+                String sale=list.get(i)[1].toString();
+                if(sale.length()>sale.indexOf(".")+3) {
+                    sale = sale.substring(0, sale.indexOf(".") + 3);
+                }
+                sales[i]=sale;
             }
             response.addNewDate("salesMonths",salesMonths);
             response.addNewDate("sales",sales);
@@ -105,7 +111,11 @@ public class HomeController {
             String[] proxyDetails=new String[list1.size()];
             for(int i=0;i<list1.size();i++){
                 proxyDetailMonths[i]=list1.get(i)[0].toString();
-                proxyDetails[i]=list1.get(i)[1].toString();
+                String proxyDetail=list1.get(i)[1].toString();
+                if(proxyDetail.length()>proxyDetail.indexOf(".")+3) {
+                    proxyDetail = proxyDetail.substring(0, proxyDetail.indexOf(".") + 3);
+                }
+                proxyDetails[i]=proxyDetail;
             }
             response.addNewDate("proxyDetailMonths",proxyDetailMonths);
             response.addNewDate("proxyDetails",proxyDetails);
@@ -116,7 +126,11 @@ public class HomeController {
             String[] withdrawDetails=new String[list2.size()];
             for(int i=0;i<list2.size();i++){
                 withdrawMonths[i]=list2.get(i)[0].toString();
-                withdrawDetails[i]=list2.get(i)[1].toString();
+                String withdrawDetail=list2.get(i)[1].toString();
+                if(withdrawDetail.length()>withdrawDetail.indexOf(".")+3) {
+                    withdrawDetail = withdrawDetail.substring(0, withdrawDetail.indexOf(".") + 3);
+                }
+                withdrawDetails[i]=withdrawDetail;
             }
             response.addNewDate("withdrawMonths",withdrawMonths);
             response.addNewDate("withdrawDetails",withdrawDetails);
@@ -127,7 +141,11 @@ public class HomeController {
             String[] successWithdrawDetails=new String[list3.size()];
             for(int i=0;i<list3.size();i++){
                 successWithdrawMonths[i]=list3.get(i)[0].toString();
-                successWithdrawDetails[i]=list3.get(i)[1].toString();
+                String successWithdrawDetail=list3.get(i)[1].toString();
+                if(successWithdrawDetail.length()>successWithdrawDetail.indexOf(".")+3) {
+                    successWithdrawDetail = successWithdrawDetail.substring(0, successWithdrawDetail.indexOf(".") + 3);
+                }
+                successWithdrawDetails[i]=successWithdrawDetail;
             }
             response.addNewDate("successWithdrawMonths",successWithdrawMonths);
             response.addNewDate("successWithdrawDetails",successWithdrawDetails);

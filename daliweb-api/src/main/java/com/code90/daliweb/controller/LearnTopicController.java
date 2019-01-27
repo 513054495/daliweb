@@ -156,14 +156,18 @@ public class LearnTopicController {
     @RequestMapping(value="/getTopics",method=RequestMethod.GET)
     public CommonResponse getTopics(@RequestParam("isShow")int isShow) {
         try {
-            List<LearnTopicVo> learnTopicVos = new ArrayList<>();
+            List<Object> learnTopicVos = new ArrayList<>();
             List<LearnTopic> rootLearnTopic = learnTopicServer.getRootLearnTopic(isShow);
             for (LearnTopic learnTopic : rootLearnTopic) {
                 List<LearnTopic> childent = learnTopicServer.getLearnTopicByParentId(learnTopic.getId(),isShow);
-                LearnTopicVo learnTopicVo = new LearnTopicVo();
-                BeanUtils.copyProperties(learnTopic, learnTopicVo);
-                learnTopicVo.setChildren(childent);
-                learnTopicVos.add(learnTopicVo);
+                if(childent.size()>0){
+                    LearnTopicVo learnTopicVo = new LearnTopicVo();
+                    BeanUtils.copyProperties(learnTopic, learnTopicVo);
+                    learnTopicVo.setChildren(childent);
+                    learnTopicVos.add(learnTopicVo);
+                }else{
+                    learnTopicVos.add(learnTopic);
+                }
             }
             logger.info("获取成功");
             return new CommonResponse("获取成功", "info", learnTopicVos);

@@ -134,6 +134,13 @@ public class SubjectController {
                 String[] id_list=ids.split(",");
                 for (String id : id_list){
                     Subject subject=(Subject) subjectServer.getObjectById(id);
+                    List<Work> works=workServer.getAllWork();
+                    for (Work work:works){
+                        if(work.getSubjects().contains(id)){
+                            logger.error("删除失败，该题目在作业中被占使用，请删除作业后再删除");
+                            return new CommonResponse("删除失败，该题目在作业中被占使用，请删除作业后再删除",3);
+                        }
+                    }
                     subjectServer.delete(subject);
                 }
                 logger.info("题目删除成功");
@@ -206,6 +213,10 @@ public class SubjectController {
                     subjectScheduleServer.save(subjectSchedule);
                 }else{
                     currentId=subjectSchedule.getSubjectId();
+                    Subject subject=(Subject) subjectServer.getObjectById(currentId+"");
+                    if(null==subject){
+                        currentId=subjectServer.getMixSubjectByAnswer();
+                    }
                 }
                 response.addNewDate("answerNum", subjectSchedule.getNum());
                 response.addNewDate("collectNum", subjectSchedule.getCorrectNum());
@@ -356,16 +367,20 @@ public class SubjectController {
                    //获取当前学员的进度
                    SubjectSchedule subjectSchedule = subjectScheduleServer.getScheduleByUserCode(userCode);
                    int maxNo=subjectServer.getMaxSubject();
-                   while(id<maxNo){
-                       int nextId=id+1;
+                   int nextId=id+1;
+                   while(nextId<maxNo){
                        Subject nextSubject= (Subject) subjectServer.getObjectById(nextId+"");
-                       if(nextSubject.getType()!=3&&nextSubject.getType()!=4){
+                       if(null!=nextSubject&&nextSubject.getType()!=3&&nextSubject.getType()!=4){
                            subjectSchedule.setSubjectId((nextId));
                            break;
                        }else{
-                           id++;
+                           nextId++;
+                       }
+                       if(nextId>maxNo){
+                           subjectSchedule.setSubjectId((maxNo));
                        }
                    }
+
                    //答题正确，进度内容更新
                    subjectSchedule.setNum(subjectSchedule.getNum() + 1);
                    subjectSchedule.setCorrectNum(subjectSchedule.getCorrectNum() + 1);
@@ -389,7 +404,7 @@ public class SubjectController {
                    while(id<maxNo){
                        int nextId=id+1;
                        Subject nextSubject= (Subject) subjectServer.getObjectById(nextId+"");
-                       if(nextSubject.getType()!=3&&nextSubject.getType()!=4){
+                       if(null!=nextSubject&&nextSubject.getType()!=3&&nextSubject.getType()!=4){
                            subjectSchedule.setSubjectId((nextId));
                            break;
                        }else{

@@ -202,6 +202,10 @@ public class UserController {
                 for (String id : id_list){
                     User user=(User)userServer.getObjectById(id);
                     userServer.delete(user);
+                    Recommend recommend=userServer.getRByCreateBy(user.getUserCode());
+                    if(null!=recommend) {
+                        userServer.deleteRecommend(recommend);
+                    }
                 }
                 logger.info("用户删除成功");
                 return new CommonResponse("删除成功");
@@ -246,16 +250,36 @@ public class UserController {
     }
 
     /**
-     * 根据用户帐号获取用户
+     * 根据用户帐号获取推荐用户
      * @param userCode 用户帐号
      * @return 用户信息
      */
     @RequestMapping(value="/daliweb/user/getRecommendByUserCode",method=RequestMethod.GET)
     public CommonResponse getRecommendByUserCode(@RequestParam("userCode") String userCode){
-        List<Recommend> recommends=userServer.getRecommendByUserCode(userCode);
-        CommonResponse response= new CommonResponse("获取用户成功","info",recommends);
-        response.addNewDate("totalFilend",recommends.size());
+        List<Recommend> recommends=new ArrayList<>();
+        getAllRecommend(recommends,userCode);
+        List<RecommendVo> recommendVos=new ArrayList<>();
+        for(Recommend recommend:recommends){
+            RecommendVo recommendVo=new RecommendVo();
+            BeanUtils.copyProperties(recommend,recommendVo);
+            User user=userServer.getUserByUserCode(recommend.createBy);
+            if(null!=user) {
+                recommendVo.setUserType(user.getUserType());
+                logger.error(user.getUserType()+"");
+            }
+            recommendVos.add(recommendVo);
+        }
+        CommonResponse response= new CommonResponse("获取用户成功","info",recommendVos);
+        response.addNewDate("totalFilend",recommendVos.size());
         return response;
+    }
+
+    private void getAllRecommend(List<Recommend> list,String userCode){
+        List<Recommend> recommends=userServer.getRecommendByUserCode(userCode);
+        for(Recommend recommend:recommends){
+            list.add(recommend);
+            getAllRecommend(list,recommend.createBy);
+        }
     }
 
     /**
@@ -271,7 +295,14 @@ public class UserController {
         int total=allUsers.size();
         int totalPage=total%pageSize==0?total/pageSize:total/pageSize+1;
         List<User> users=userServer.findUserCriteria(page,pageSize,req);
-        CommonResponse response= new CommonResponse("获取成功","info",users);
+        List<UserVo> userVos=new ArrayList<>();
+        for(User user : users){
+            UserVo userVo=new UserVo();
+            BeanUtils.copyProperties(user,userVo);
+            userVo.setShareUser(userServer.getRecommendByCreateBy(user.getUserCode()));
+            userVos.add(userVo);
+        }
+        CommonResponse response= new CommonResponse("获取成功","info",userVos);
         response.addNewDate("pageNum",page+1);
         response.addNewDate("pageSize",pageSize);
         response.addNewDate("total",total);
@@ -416,8 +447,7 @@ public class UserController {
             BeanUtils.copyProperties(req,user);
             user.setDlwPsw(MD5Util.getMD5String(req.getDlwPsw()));
             user.setShareCode(IdUtils.createShareCode());
-            user.setUserName("达礼网用户");
-            user.setNickname("达礼网用户");
+            user.setNickname("DL"+DateUtils.dateToDateString(new Date(),DateUtils.DATATIMEF_STR_MIS));
             user.setPhone(req.getUserCode());
             User recommendUser=userServer.getUserByShareCode(req.getShareCode());
             if(null!=recommendUser){
@@ -453,10 +483,10 @@ public class UserController {
             User user = userServer.getUserByUserCode(req.getUserCode());
             if (null != user&&user.getIsFreeze()==0) {
                 if (MD5Util.getMD5String(req.getDlwPsw()).equals(user.getDlwPsw())) {
-                    if(user.getUserType()!=2&&req.getIsFront()!=1){
+                    if((user.getUserType()==0||user.getUserType()==1)&&req.getIsFront()!=1){
                         logger.error("登录失败，非管理员无法登录后台管理");
                         return new CommonResponse("登录失败，非管理员无法登录后台管理", 4);
-                    }else if(user.getUserType()==2&&req.getIsFront()==1){
+                    }else if((user.getUserType()==2||user.getUserType()==3||user.getUserType()==4||user.getUserType()==5)&&req.getIsFront()==1){
                         logger.error("登录失败，管理员无法登录");
                         return new CommonResponse("登录失败，管理员无法登录", 4);
                     }else{
@@ -578,8 +608,10 @@ public class UserController {
         //必填:短信模板-可在短信控制台中找到，发送国际/港澳台消息时，请使用国际/港澳台短信模版
         if(type==0) {
             request.setTemplateCode("SMS_150174052");
-        }else{
+        }else if(type==1){
             request.setTemplateCode("SMS_151233574");
+        }else{
+            request.setTemplateCode("SMS_155357268");
         }
         //可选:模板中的变量替换JSON串,如模板内容为"亲爱的${name},您的验证码为${code}"时,此处的值为
         //友情提示:如果JSON中需要带换行符,请参照标准的JSON协议对换行符的要求,比如短信内容中包含\r\n的情况在JSON中需要表示成\\r\\n,否则会导致JSON在服务端解析失败
@@ -587,8 +619,10 @@ public class UserController {
         String msgCode = getMsgCode();
         if(type==0) {
             redisServer.setValue("register" + phone, msgCode, 10);
-        }else{
+        }else if(type==1){
             redisServer.setValue("forgetPsw" + phone, msgCode, 10);
+        }else {
+            redisServer.setValue("bindingUser" + phone, msgCode, 10);
         }
         request.setTemplateParam("{\"code\":\"" + msgCode + "\"}");
         //请求失败这里会抛ClientException异常
@@ -605,6 +639,7 @@ public class UserController {
     @RequestMapping(value = "daliweb/user/forgetPsw",method = RequestMethod.POST)
     public CommonResponse forgetPsw(@RequestBody UserRegisterReq req) throws ClientException {
         try {
+            CommonResponse response=new CommonResponse("保存成功");
             String str=redisServer.getValue("forgetPsw"+req.getUserCode());
             logger.error("------------>>>>>>>>>>>>"+"forgetPsw"+req.getUserCode());
             logger.error("------------>>>>>>>>>>>>"+str);
@@ -617,7 +652,149 @@ public class UserController {
             user.setDlwPsw(MD5Util.getMD5String(req.getDlwPsw()));
             userServer.save(user);
             logger.info("保存成功");
-            return new CommonResponse("保存成功");
+            response.addNewDate("info",user);
+            return response;
+        }catch (Exception e){
+            logger.error("保存失败，原因："+e.getMessage());
+            return new CommonResponse("保存失败",1,e);
+        }
+    }
+
+    @RequestMapping(value = "daliweb/user/bindingUser",method = RequestMethod.GET)
+    public CommonResponse forgetPsw(@RequestParam("phone")String phone,@RequestParam("wxCode")String wxCode,@RequestParam("verificationCode")String verificationCode,@RequestParam("shareCode")String shareCode){
+        try {
+            CommonResponse response=new CommonResponse("保存成功");
+            String str=redisServer.getValue("bindingUser"+phone);
+            logger.error("------------>>>>>>>>>>>>"+"bindingUser"+phone);
+            logger.error("------------>>>>>>>>>>>>"+str);
+            logger.error("------------>>>>>>>>>>>>"+verificationCode);
+            if(null==str||!str.equals(verificationCode)){
+                logger.error("保存失败，原因：验证码不正确");
+                return new CommonResponse("保存失败，原因：验证码不正确",1);
+            }
+            User user=userServer.getUserByUserCode(phone);
+            if(user!=null){
+                User user1=userServer.getUserByWechatCode(wxCode);
+                if(user1==null){
+                    user.setWechatCode(wxCode);
+                    Recommend recommend=userServer.getRByCreateBy(wxCode);
+                    if(null!=recommend){
+                        Recommend oldRecommend=userServer.getRByCreateBy(user.getUserCode());
+                        if(null==oldRecommend) {
+                            recommend.createBy = user.getUserCode();
+                            userServer.saveRecommend(recommend);
+                        }else{
+                            userServer.deleteRecommend(recommend);
+                        }
+                    }
+                    response.addNewDate("hasUser",true);
+                }else{
+                    logger.error("绑定失败，原因：该微信号已经被绑定");
+                    return new CommonResponse("绑定失败，该微信号已经被绑定",1);
+                }
+            }else{
+                User user1=userServer.getUserByWechatCode(wxCode);
+                if(user1==null) {
+                    user = new User();
+                    user.setUserCode(phone);
+                    user.setDlwPsw(MD5Util.getMD5String(phone.substring(4)));
+                    logger.error("------------>>>>>>>>>>>>" + phone.substring(4));
+                    user.setShareCode(IdUtils.createShareCode());
+                    user.setNickname("DL" + DateUtils.dateToDateString(new Date(), DateUtils.DATATIMEF_STR_MIS));
+                    user.setPhone(phone);
+                    user.setWechatCode(wxCode);
+                    Recommend recommend=userServer.getRByCreateBy(wxCode);
+                    if(null!=recommend){
+                        Recommend oldRecommend=userServer.getRByCreateBy(user.getUserCode());
+                        if(null==oldRecommend) {
+                            recommend.createBy = user.getUserCode();
+                            userServer.saveRecommend(recommend);
+                        }else{
+                            userServer.deleteRecommend(recommend);
+                        }
+                    }else{
+                        User recommendUser = userServer.getUserByShareCode(shareCode);
+                        if (null != recommendUser) {
+                            Recommend recommend1 = new Recommend();
+                            recommend1.createBy = phone;
+                            recommend1.setUserCode(recommendUser.getUserCode());
+                            userServer.saveRecommend(recommend1);
+                        }
+                    }
+                    response.addNewDate("hasUser", false);
+                }else{
+                    logger.error("绑定失败，原因：该微信号已经被绑定");
+                    return new CommonResponse("绑定失败，该微信号已经被绑定",1);
+                }
+            }
+            userServer.save(user);
+            logger.info("绑定成功");
+            response.addNewDate("info",user);
+            return response;
+        }catch (Exception e){
+            logger.error("绑定失败，原因："+e.getMessage());
+            return new CommonResponse("绑定失败",1,e);
+        }
+    }
+
+
+    @RequestMapping(value = "daliweb/user/bindingSpecialUser",method = RequestMethod.GET)
+    public CommonResponse forgetPsw(@RequestParam("userCode")String userCode,@RequestParam("dlPsw")String dlPsw,@RequestParam("wxCode")String wxCode){
+        try {
+            CommonResponse response=new CommonResponse("保存成功");
+            User user=userServer.getUserByUserCode(userCode);
+            if(user!=null){
+                if(MD5Util.getMD5String(dlPsw).equals(user.getDlwPsw())){
+                    User user1=userServer.getUserByWechatCode(wxCode);
+                    if(user1==null){
+                        response.addNewDate("info",user);
+                        user.setWechatCode(wxCode);
+                        Recommend recommend=userServer.getRByCreateBy(wxCode);
+                        if(null!=recommend){
+                            Recommend oldRecommend=userServer.getRByCreateBy(user.getUserCode());
+                            if(null==oldRecommend) {
+                                recommend.createBy = user.getUserCode();
+                                userServer.saveRecommend(recommend);
+                            }else{
+                                userServer.deleteRecommend(recommend);
+                            }
+                        }
+                        userServer.save(user);
+                        return response;
+                    }else{
+                        logger.error("绑定失败，原因：该微信号已经被绑定");
+                        return new CommonResponse("绑定失败，该微信号已经被绑定",1);
+                    }
+                }else{
+                    logger.error("绑定失败，原因：用户不存在或密码不正确");
+                    return new CommonResponse("用户名不存在或密码不正确",1);
+                }
+            }else{
+                logger.error("绑定失败，原因：用户不存在或密码不正确");
+                return new CommonResponse("用户名不存在或密码不正确",1);
+            }
+        }catch (Exception e){
+            logger.error("绑定失败，原因："+e.getMessage());
+            return new CommonResponse("绑定失败",1,e);
+        }
+    }
+
+    @RequestMapping(value = "daliweb/user/addRecommend",method = RequestMethod.GET)
+    public CommonResponse addRecommend(@RequestParam("userCode")String userCode,@RequestParam("shareCode")String shareCode){
+        try {
+            User user=userServer.getUserByShareCode(shareCode);
+            if(null!=user){
+                Recommend recommend=new Recommend();
+                recommend.setUserCode(user.getUserCode());
+                recommend.setType(1);
+                recommend.createBy=userCode;
+                userServer.saveRecommend(recommend);
+                logger.error("保存推荐关系成功");
+                return new CommonResponse("保存推荐关系成功");
+            }else{
+                logger.error("保存失败，原因：推荐人不存在");
+                return new CommonResponse("保存失败，原因：推荐人不存在",1,null);
+            }
         }catch (Exception e){
             logger.error("保存失败，原因："+e.getMessage());
             return new CommonResponse("保存失败",1,e);

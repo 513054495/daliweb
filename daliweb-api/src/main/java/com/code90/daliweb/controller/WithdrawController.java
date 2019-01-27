@@ -52,18 +52,24 @@ public class WithdrawController {
     @RequestMapping(value = "/addWithdraw",method = RequestMethod.POST)
     public CommonResponse addWithdraw(@RequestBody WithdrawSaveReq req){
         try {
-            Withdraw withdraw=new Withdraw();
-            Rules rules= (Rules) ruleServer.getObjectById(1+"");
-            BeanUtils.copyProperties(req,withdraw);
-            withdraw.createBy=req.getCreateBy();
-            double feeMoney=req.getMoney()*rules.getFee()/100;
-            double taxMoney=req.getMoney()*rules.getTax()/100;
-            withdraw.setFeeMoney(new BigDecimal(feeMoney).setScale(2, RoundingMode.UP).doubleValue());
-            withdraw.setTaxMoney(new BigDecimal(taxMoney).setScale(2, RoundingMode.UP).doubleValue());
-            withdraw.setPayMoney(new BigDecimal(req.getMoney()-feeMoney-taxMoney).setScale(2, RoundingMode.UP).doubleValue());
-            withdrawServer.save(withdraw);
-            logger.info("保存成功");
-            return new CommonResponse("保存成功");
+            Withdraw withdraw=withdrawServer.getNotSuccessWithdrawByUserCode(req.getCreateBy());
+            if(null==withdraw) {
+                withdraw = new Withdraw();
+                Rules rules = (Rules) ruleServer.getObjectById(1 + "");
+                BeanUtils.copyProperties(req, withdraw);
+                withdraw.createBy = req.getCreateBy();
+                double feeMoney = req.getMoney() * rules.getFee() / 100;
+                double taxMoney = req.getMoney() * rules.getTax() / 100;
+                withdraw.setFeeMoney(new BigDecimal(feeMoney).setScale(2, RoundingMode.UP).doubleValue());
+                withdraw.setTaxMoney(new BigDecimal(taxMoney).setScale(2, RoundingMode.UP).doubleValue());
+                withdraw.setPayMoney(new BigDecimal(req.getMoney() - feeMoney - taxMoney).setScale(2, RoundingMode.UP).doubleValue());
+                withdrawServer.save(withdraw);
+                logger.info("保存成功");
+                return new CommonResponse("保存成功");
+            }else{
+                logger.error("保存失败，您已有一笔提现正在审批中！");
+                return new CommonResponse("保存失败，您已有一笔提现正在审批中！",1);
+            }
         }catch (Exception e){
             logger.error("保存失败，原因："+e.getMessage());
             return new CommonResponse("保存失败",1,e);
@@ -136,9 +142,9 @@ public class WithdrawController {
      */
     @RequestMapping(value="/getWithdrawMoneyByUserCode",method=RequestMethod.GET)
     public CommonResponse getWithdrawMoneyByUserCode(@RequestParam("userCode")String userCode){
+        Rules rules= (Rules) ruleServer.getObjectById(1+"");
         try{
             CommonResponse response=new CommonResponse("获取成功");
-            Rules rules= (Rules) ruleServer.getObjectById(1+"");
             double proxyMoney=proxyServer.getAllMoneyByUserCode(userCode);
             double withdrawMoney=withdrawServer.getAllMoneyByUserCode(userCode);
             double totalMoney=proxyMoney-withdrawMoney;
@@ -153,7 +159,9 @@ public class WithdrawController {
             return response;
         }catch (Exception e){
             logger.error("获取失败,原因："+e.getMessage());
-            return new CommonResponse("获取失败",2,e);
+            CommonResponse response=new CommonResponse("获取失败",2,e);
+            response.addNewDate("withdrawNum",rules.getWithdrawNum());
+            return response;
         }
     }
 

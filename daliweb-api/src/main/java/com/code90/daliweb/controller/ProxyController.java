@@ -178,9 +178,9 @@ public class ProxyController {
                 BeanUtils.copyProperties(proxyDetail,proxyDetailVo);
                 List<OrderDetail> orderDetails=orderDetailServer.getOrderDetailByOrderId(proxyDetail.getOrderNo());
                 for(OrderDetail orderDetail : orderDetails){
-                    Commodity commodity= (Commodity) commodityServer.getObjectById(orderDetail.getCommodityId());
-                    proxyDetailVo.setTotalMoney(Double.parseDouble(nf.format(proxyDetailVo.getTotalMoney()+commodity.getPrice()*orderDetail.getOrderNum())));
-                    currentTotalMoney+=(commodity.getPrice()*orderDetail.getOrderNum());
+                    CommodityNorm commodityNorm=commodityServer.getCommodityNormById(orderDetail.getNormId());
+                    proxyDetailVo.setTotalMoney(Double.parseDouble(nf.format(proxyDetailVo.getTotalMoney()+commodityNorm.getPrice()*orderDetail.getOrderNum())));
+                    currentTotalMoney+=(commodityNorm.getPrice()*orderDetail.getOrderNum());
                     proxyDetailVo.setPayMoney(Double.parseDouble(nf.format(proxyDetailVo.getPayMoney()+orderDetail.getMoney())));
                     currentPayMoney+=orderDetail.getMoney();
                 }
@@ -240,8 +240,8 @@ public class ProxyController {
             currentProxyMoney+=proxyDetail.getMoney();
             List<OrderDetail> orderDetails=orderDetailServer.getOrderDetailByOrderId(proxyDetail.getOrderNo());
             for(OrderDetail orderDetail : orderDetails){
-                Commodity commodity= (Commodity) commodityServer.getObjectById(orderDetail.getCommodityId());
-                currentTotalMoney+=(commodity.getPrice()*orderDetail.getOrderNum());
+                CommodityNorm commodityNorm=commodityServer.getCommodityNormById(orderDetail.getNormId());
+                currentTotalMoney+=(commodityNorm.getPrice()*orderDetail.getOrderNum());
                 currentPayMoney+=orderDetail.getMoney();
             }
         }
@@ -257,8 +257,8 @@ public class ProxyController {
             BeanUtils.copyProperties(proxyDetail,proxyDetailVo);
             List<OrderDetail> orderDetails=orderDetailServer.getOrderDetailByOrderId(proxyDetail.getOrderNo());
             for(OrderDetail orderDetail : orderDetails){
-                Commodity commodity= (Commodity) commodityServer.getObjectById(orderDetail.getCommodityId());
-                proxyDetailVo.setTotalMoney(Double.parseDouble(nf.format(proxyDetailVo.getTotalMoney()+commodity.getPrice()*orderDetail.getOrderNum())));
+                CommodityNorm commodityNorm=commodityServer.getCommodityNormById(orderDetail.getNormId());
+                proxyDetailVo.setTotalMoney(Double.parseDouble(nf.format(proxyDetailVo.getTotalMoney()+commodityNorm.getPrice()*orderDetail.getOrderNum())));
                 proxyDetailVo.setPayMoney(Double.parseDouble(nf.format(proxyDetailVo.getPayMoney()+orderDetail.getMoney())));
             }
             proxyDetailVos.add(proxyDetailVo);
@@ -301,9 +301,9 @@ public class ProxyController {
             BeanUtils.copyProperties(proxyDetail,proxyDetailVo);
             List<OrderDetail> orderDetails=orderDetailServer.getOrderDetailByOrderId(proxyDetail.getOrderNo());
             for(OrderDetail orderDetail : orderDetails){
-                Commodity commodity= (Commodity) commodityServer.getObjectById(orderDetail.getCommodityId());
-                proxyDetailVo.setTotalMoney(Double.parseDouble(nf.format(proxyDetailVo.getTotalMoney()+commodity.getPrice()*orderDetail.getOrderNum())));
-                currentTotalMoney+=(commodity.getPrice()*orderDetail.getOrderNum());
+                CommodityNorm commodityNorm=commodityServer.getCommodityNormById(orderDetail.getNormId());
+                proxyDetailVo.setTotalMoney(Double.parseDouble(nf.format(proxyDetailVo.getTotalMoney()+commodityNorm.getPrice()*orderDetail.getOrderNum())));
+                currentTotalMoney+=(commodityNorm.getPrice()*orderDetail.getOrderNum());
                 proxyDetailVo.setPayMoney(Double.parseDouble(nf.format(proxyDetailVo.getPayMoney()+orderDetail.getMoney())));
                 currentPayMoney+=orderDetail.getMoney();
             }

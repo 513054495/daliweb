@@ -17,6 +17,6 @@ public interface WorkService extends JpaRepository<Work,Integer>,JpaSpecificatio
     Work getById(String id);
     @Query("select w from Work w where w.status=1")
     List<Work> getAllStartWork();
-    @Query("select w from Work w where w.status<>0")
+    @Query("select w from Work w where w.status<>0 order by w.createTime desc ")
     List<Work> getPublishWorks();
 }

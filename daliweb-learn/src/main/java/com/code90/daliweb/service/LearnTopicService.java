@@ -23,7 +23,7 @@ public interface LearnTopicService extends JpaRepository<LearnTopic,Integer>,Jpa
     int getMaxLevel();
     @Query("select l from LearnTopic l where l.parentId is null order by l.level desc")
     List<LearnTopic> getRootLearnTopic();
-    @Query("select l from LearnTopic l where l.parentId=?1 order by l.level desc")
+    @Query("select l from LearnTopic l where l.parentId=?1  order by l.level desc")
     List<LearnTopic> getLearnTopicByParentId(String id);
     @Query("select l from LearnTopic l where l.parentId is null and l.status=1 order by l.level desc")
     List<LearnTopic> getRootLearnTopicNoStop();

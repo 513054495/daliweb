@@ -174,19 +174,23 @@ public class LearnContentController  {
     @RequestMapping(value="/getTopicParentById",method=RequestMethod.GET)
     public CommonResponse getTopicParentById(@RequestParam("id")String id){
         try{
+            LearnTopic parentlearnTopic= (LearnTopic) learnTopicServer.getObjectById(id);
             List<LearnTopic> learnTopics=learnTopicServer.getLearnTopicByParentId(id,0);
+            learnTopics.add(parentlearnTopic);
             List<LearnContentVo> learnContentVos=new ArrayList<>();
             for(LearnTopic learnTopic :learnTopics){
-                LearnContent learnContent=learnContentServer.getLearnContentByTopicId(learnTopic.getId());
-                LearnContentVo learnContentVo=new LearnContentVo();
-                BeanUtils.copyProperties(learnContent,learnContentVo);
-                learnContentVo.setTopicName(learnTopic.getTopicName());
-                LearnTopic parentTopic= (LearnTopic) learnTopicServer.getObjectById(learnTopic.getParentId());
-                if(null!=parentTopic){
-                    learnContentVo.setParentId(parentTopic.getId());
-                    learnContentVo.setParentName(parentTopic.getTopicName());
+                List<LearnContent> learnContents=learnContentServer.getLearnContentByTopicId(learnTopic.getId());
+                for (LearnContent learnContent:learnContents){
+                    LearnContentVo learnContentVo=new LearnContentVo();
+                    BeanUtils.copyProperties(learnContent,learnContentVo);
+                    learnContentVo.setTopicName(learnTopic.getTopicName());
+                    LearnTopic parentTopic= (LearnTopic) learnTopicServer.getObjectById(learnTopic.getParentId());
+                    if(null!=parentTopic){
+                        learnContentVo.setParentId(parentTopic.getId());
+                        learnContentVo.setParentName(parentTopic.getTopicName());
+                    }
+                    learnContentVos.add(learnContentVo);
                 }
-                learnContentVos.add(learnContentVo);
             }
             logger.info("获取成功");
             return new CommonResponse("获取成功","info",learnContentVos);

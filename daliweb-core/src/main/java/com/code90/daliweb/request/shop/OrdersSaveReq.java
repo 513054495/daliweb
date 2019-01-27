@@ -138,4 +138,12 @@ public class OrdersSaveReq extends CommonRequest {
     public void setaSqzwx(String aSqzwx) {
         this.aSqzwx = aSqzwx;
     }
+
+    public String getOrderPostalCode() {
+        return orderPostalCode;
+    }
+
+    public void setOrderPostalCode(String orderPostalCode) {
+        this.orderPostalCode = orderPostalCode;
+    }
 }

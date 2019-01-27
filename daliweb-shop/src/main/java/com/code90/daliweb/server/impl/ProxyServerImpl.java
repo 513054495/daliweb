@@ -262,4 +262,9 @@ public class ProxyServerImpl implements ProxyServer {
         return list;
     }
 
+    @Override
+    public Proxy getAllProxyByUserCode(String userCode) {
+        return proxyService.getAllProxyByUserCode(userCode);
+    }
+
 }

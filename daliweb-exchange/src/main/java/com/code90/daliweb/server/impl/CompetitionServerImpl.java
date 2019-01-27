@@ -94,7 +94,8 @@ public class CompetitionServerImpl implements CompetitionServer {
 
     @Override
     public List<Competition> getAll() {
-        return competitionService.findAll();
+        Sort sort = new Sort(Sort.Direction.DESC, "createTime");
+        return competitionService.findAll(sort);
     }
 
     @Override

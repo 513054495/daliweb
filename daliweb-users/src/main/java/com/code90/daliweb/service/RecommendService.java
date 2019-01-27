@@ -13,8 +13,10 @@ import java.util.List;
  * @create 2018-10-24 22:08
  **/
 public interface RecommendService extends JpaRepository<Recommend,Integer>,JpaSpecificationExecutor<Recommend> {
-    @Query("select r from Recommend r where r.userCode=?1 order by r.createTime desc")
+    @Query("select r from Recommend r where r.userCode=?1 order by r.createTime desc ")
     List<Recommend> getRecommendByUserCode(String userCode);
     @Query("select r.userCode from Recommend r where r.createBy=?1 order by r.createTime desc")
     String getRecommendByCreateBy(String userCode);
+    @Query("select r from Recommend r where r.createBy=?1 order by r.createTime desc")
+    Recommend getRByCreateBy(String userCode);
 }

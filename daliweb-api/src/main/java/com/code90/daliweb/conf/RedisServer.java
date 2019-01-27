@@ -1,6 +1,7 @@
 package com.code90.daliweb.conf;
 
 import com.code90.daliweb.domain.Commodity;
+import com.code90.daliweb.domain.CommodityNorm;
 import com.code90.daliweb.server.CommodityServer;
 import com.code90.daliweb.utils.StringUtil;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -36,10 +37,14 @@ public class RedisServer {
     public int getNum(String key){
         String str_num=stringRedisTemplate.opsForValue().get(key);
         if(StringUtil.isEmpty(str_num)){
-            Commodity commodity= (Commodity) commodityServer.getObjectById(key);
-            str_num=commodity.getTotalNum()+"";
+            CommodityNorm commodityNorm=commodityServer.getCommodityNormById(key);
+            str_num=commodityNorm.getTotalNum()+"";
             stringRedisTemplate.opsForValue().set(key,str_num);
         }
         return Integer.parseInt(str_num);
+    }
+
+    public void delValue(String key){
+        stringRedisTemplate.delete(key);
     }
 }

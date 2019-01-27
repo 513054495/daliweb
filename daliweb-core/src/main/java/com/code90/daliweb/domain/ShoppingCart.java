@@ -28,7 +28,7 @@ public class ShoppingCart extends BaseDomain {
     private int num;
     //规格
     @Column
-    private String specification;
+    private String normId;
 
 
     public String getCommodityId() {
@@ -55,11 +55,11 @@ public class ShoppingCart extends BaseDomain {
         this.id = id;
     }
 
-    public String getSpecification() {
-        return specification;
+    public String getNormId() {
+        return normId;
     }
 
-    public void setSpecification(String specification) {
-        this.specification = specification;
+    public void setNormId(String normId) {
+        this.normId = normId;
     }
 }

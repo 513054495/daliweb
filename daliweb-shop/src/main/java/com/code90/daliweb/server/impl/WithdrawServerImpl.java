@@ -142,4 +142,9 @@ public class WithdrawServerImpl implements WithdrawServer {
         }
         return withdraws;
     }
+
+    @Override
+    public Withdraw getNotSuccessWithdrawByUserCode(String createBy) {
+        return withdrawService.getNotSuccessWithdrawByUserCode(createBy);
+    }
 }
